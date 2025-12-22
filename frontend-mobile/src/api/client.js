@@ -1,7 +1,11 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Temporary hardcoded for production - will use env var when available
+const API_URL = import.meta.env.VITE_API_URL ||
+  (window.location.hostname.includes('vercel.app')
+    ? 'https://ukk-jagakampung.onrender.com/api'
+    : 'http://localhost:5000/api');
 
 // Create axios instance
 const client = axios.create({
