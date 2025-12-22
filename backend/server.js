@@ -35,12 +35,19 @@ app.use(
         return callback(null, true);
       }
 
+      // Allow Vercel deployment domains (production)
+      if (origin.includes('.vercel.app') || origin.includes('ukk-jaga-kampung')) {
+        return callback(null, true);
+      }
+
       // For production, you can add specific domains here
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
   })
 );
+
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
