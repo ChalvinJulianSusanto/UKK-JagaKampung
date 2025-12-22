@@ -1,0 +1,44 @@
+/**
+ * Theme CSS Variables
+ * Ubah nilai di sini untuk mengubah warna tema tanpa perlu restart dev server
+ */
+
+:root {
+  /* Primary Colors (Blue) */
+  --color-primary: #1d60e7;
+  --color-primary-light: #42A5F5;
+  --color-primary-dark: #224fe5;
+
+  /* Secondary Colors (Yellow/Gold) */
+  --color-secondary: #FFC107;
+  --color-secondary-light: #FFCA28;
+  --color-secondary-dark: #FFA000;
+
+  /* Status Colors */
+  --color-success: #4CAF50;
+  --color-error: #fa0808ff;
+  --color-warning: #FF9800;
+
+  /* Neutral Colors */
+  --color-neutral-light: #F5F5F5;
+  --color-neutral: #6B7280;
+  --color-neutral-dark: #111827;
+
+  /* Background Colors */
+  --color-background: #FFFFFF;
+  --color-background-secondary: #F9FAFB;
+
+  /* Border Colors */
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #1F2937;
+    --color-background-secondary: #111827;
+    --color-border: #374151;
+    --color-border-light: #4B5563;
+  }
+}
