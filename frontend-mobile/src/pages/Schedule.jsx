@@ -58,8 +58,19 @@ const Schedule = () => {
   const [showDefaultSubtitle, setShowDefaultSubtitle] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [unreadCount, setUnreadCount] = useState(0);
+  // Helper to persist filter visibility
+  const getSavedFilterState = () => {
+    const saved = localStorage.getItem('scheduleShowFilters');
+    return saved === null ? true : saved === 'true';
+  };
+
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'oldest'
-  const [showFilters, setShowFilters] = useState(true); // Toggle filter visibility
+  const [showFilters, setShowFilters] = useState(getSavedFilterState()); // Toggle filter visibility
+
+  // Persist filter visibility
+  useEffect(() => {
+    localStorage.setItem('scheduleShowFilters', showFilters);
+  }, [showFilters]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
@@ -655,8 +666,8 @@ const Schedule = () => {
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
                         className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${currentPage === 1
-                            ? 'bg-slate-50 border-slate-100 cursor-not-allowed'
-                            : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm'
+                          ? 'bg-slate-50 border-slate-100 cursor-not-allowed'
+                          : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm'
                           }`}
                       >
                         <MaskedIcon src={backIcon} size={16} color={currentPage === 1 ? '#cbd5e1' : '#64748b'} />
@@ -665,8 +676,8 @@ const Schedule = () => {
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
                         className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${currentPage === totalPages
-                            ? 'bg-slate-50 border-slate-100 cursor-not-allowed'
-                            : 'bg-white border-primary/20 hover:bg-blue-50 hover:border-primary/40 shadow-sm shadow-blue-500/10'
+                          ? 'bg-slate-50 border-slate-100 cursor-not-allowed'
+                          : 'bg-white border-primary/20 hover:bg-blue-50 hover:border-primary/40 shadow-sm shadow-blue-500/10'
                           }`}
                       >
                         <MaskedIcon src={nextIcon} size={16} color={currentPage === totalPages ? '#cbd5e1' : '#0ea5e9'} />
