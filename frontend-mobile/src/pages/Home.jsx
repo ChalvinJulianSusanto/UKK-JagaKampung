@@ -18,8 +18,7 @@ import iconKehadiran from '../assets/centang.png';
 import bgrImage from '../assets/bgr.png';
 import gambarIcon from '../assets/gambar.png';
 import logoPutih from '../assets/putih.png';
-import iconUp from '../assets/up.png';
-import iconLoading from '../assets/close.png';
+
 import IconCamera from '../assets/cam.png';
 import iconIn from '../assets/in.png';
 import iconOut from '../assets/out.png';
@@ -33,7 +32,7 @@ import ngananIcon from '../assets/nganan.png';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 // Gunakan authAPI untuk update profil, dashboardAPI untuk statistik
-import { dashboardAPI, attendancesAPI, authAPI, notificationsAPI, schedulesAPI } from '../api';
+import { attendancesAPI, authAPI, notificationsAPI, schedulesAPI } from '../api';
 import { getTodayPartner } from '../api/schedules';
 import { Button, Badge, Loading, EmptyState, Modal } from '../components/common';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isBefore, startOfDay } from 'date-fns';
@@ -582,34 +581,7 @@ const JadwalCard = ({ title, time, icon, variant = 'white', iconColor = '#000000
 };
 
 
-const StatCard = ({ title, subtitle, value, unit, icon, color, bg, showProgress, isImage }) => (
-  <div className="bg-white rounded-xl p-4 w-32 flex-shrink-0 text-center shadow-sm border border-gray-100 mx-1 first:ml-0 last:mr-0">
-    <div className={`w-10 h-10 ${bg} rounded-lg flex items-center justify-center mx-auto mb-2`}>
-      {isImage ? (
-        <MaskedIcon src={icon} color={color} size={20} alt={title} />
-      ) : (
-        <div style={{ color: color }}></div>
-      )}
-    </div>
-    <p className="text-2xl font-bold text-gray-900 mb-1">
-      {value}{unit || ''}
-    </p>
-    <p className="text-xs text-gray-500 font-medium leading-tight">
-      {title}<br />{subtitle}
-    </p>
-    {showProgress && (
-      <div className="mt-2">
-        <div className="w-full bg-gray-100 rounded-full h-1.5">
-          <div
-            className={`h-1.5 rounded-full transition-all duration-500 ${value >= 80 ? 'bg-green-500' : value >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-            style={{ width: `${Math.min(value, 100)}%` }}
-          />
-        </div>
-      </div>
-    )}
-  </div>
-);
+
 
 // --- 3. PARTNER CARD ---
 // Helper to separate logic for a single partner item
@@ -933,38 +905,12 @@ const Home = () => {
   const { user } = useAuth();
   const { currentLanguage, t } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
-  const [recentAttendances, setRecentAttendances] = useState([]);
-  const [selectedAttendance, setSelectedAttendance] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [currentSchedule, setCurrentSchedule] = useState(null);
-  const [todayAttendances, setTodayAttendances] = useState({ masuk: null, pulang: null });
-  const [partners, setPartners] = useState([]);
-
-  const statsScrollRef = useRef(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
   useEffect(() => { fetchData(); }, []);
-
-  useEffect(() => {
-    if (statsScrollRef.current && stats) {
-      const element = statsScrollRef.current;
-      const scrollWidth = element.scrollWidth - element.clientWidth;
-      if (scrollWidth > 0) setScrollProgress(0);
-    }
-  }, [stats]);
-
-  const handleStatsScroll = (e) => {
-    const element = e.target;
-    const progress = (element.scrollLeft / (element.scrollWidth - element.clientWidth)) * 100;
-    setScrollProgress(progress || 0);
-  };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      await Promise.all([fetchStats(), fetchRecentAttendances(), fetchUnreadCount(), fetchCurrentSchedule(), fetchPartners()]);
+      await Promise.all([fetchRecentAttendances(), fetchUnreadCount(), fetchCurrentSchedule(), fetchPartners()]);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
@@ -1004,13 +950,7 @@ const Home = () => {
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const response = await dashboardAPI.getUserStats();
-      if (response.success) setStats(response.data || {});
-      else setStats({});
-    } catch (e) { setStats({}) }
-  };
+
 
   const fetchRecentAttendances = async () => {
     try {
@@ -1058,12 +998,7 @@ const Home = () => {
 
   if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><Loading size="lg" /></div>;
 
-  const statCardsData = [
-    { title: t('home.present'), subtitle: t('home.thisMonth'), value: stats?.monthlyAttendance || 0, icon: checkIcon, isImage: true, color: '#4CAF50', bg: 'bg-green-50' },
-    { title: t('home.totalAttendance'), subtitle: t('home.totalAttendanceSubtitle'), value: stats?.totalAttendance || 0, icon: iconKehadiran, isImage: true, color: '#1976D2', bg: 'bg-blue-50' },
-    { title: t('home.absent'), subtitle: t('home.absentSubtitle'), value: stats?.totalAbsent || 0, icon: iconLoading, isImage: true, color: '#F44336', bg: 'bg-red-50' },
-    { title: t('home.attendanceRate'), subtitle: t('home.attendanceRateSubtitle'), value: stats?.attendanceRate || 0, unit: '%', icon: iconUp, isImage: true, color: '#FF9800', bg: 'bg-orange-50', showProgress: true },
-  ];
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 font-sans">
@@ -1117,29 +1052,7 @@ const Home = () => {
         {/* Attendance Calendar Section */}
         <AttendanceCalendar navigate={navigate} />
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-6"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-gray-800">{t('home.attendanceStats')}</h2>
-            <Badge variant="primary" size="sm">{format(new Date(), 'MMMM yyyy', { locale: id })}</Badge>
-          </div>
 
-          <div className="relative">
-            <div ref={statsScrollRef} onScroll={handleStatsScroll} className="flex gap-3 overflow-x-auto pb-4 no-scrollbar" style={{ scrollSnapType: 'x mandatory' }}>
-              {statCardsData.map((stat, index) => (
-                <motion.div key={index} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }} className="flex-shrink-0 snap-center">
-                  <StatCard {...stat} />
-                </motion.div>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 justify-center -mt-1">
-              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${scrollProgress < 50 ? 'bg-blue-600' : 'bg-gray-300 opacity-50'}`} />
-              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${scrollProgress >= 50 ? 'bg-blue-600' : 'bg-gray-300 opacity-50'}`} />
-            </div>
-          </div>
-        </motion.div>
 
 
       </div>
