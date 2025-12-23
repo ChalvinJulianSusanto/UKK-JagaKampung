@@ -926,42 +926,41 @@ const Attendance = () => {
 
           {/* Riwayat Absensi */}
           <div className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
-            <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-              <div className='flex items-center gap-2 flex-shrink-0'>
+            <div className="flex items-center justify-between mb-4">
+              <div className='flex items-center gap-2'>
                 <img src={historyIcon} className="w-5 h-5 opacity-70" alt="" />
                 <span className="text-gray-800 text-base font-semibold">{t('attendance.history')}</span>
               </div>
-              <div className="flex items-center gap-2 ml-auto">
-                {/* Compact Filter Buttons */}
-                {showHistory && (
-                  <div className="bg-gray-100 rounded-lg p-0.5 flex flex-shrink-0">
-                    {['latest', 'oldest'].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setHistorySort(type)}
-                        className={`px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all whitespace-nowrap ${historySort === type
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-gray-500 hover:bg-gray-200'
-                          }`}
-                      >
-                        {type === 'latest' ? t('common.newest') : t('common.oldest')}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <motion.button
-                  onClick={() => setShowHistory(!showHistory)}
-                  whileTap={{ scale: 0.9 }}
-                  className="flex-shrink-0 p-1"
-                >
-                  <img src={downIcon} className="w-4 h-4 opacity-50" style={{ transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)' }} alt="" />
-                </motion.button>
-              </div>
+              <motion.button
+                onClick={() => setShowHistory(!showHistory)}
+                whileTap={{ scale: 0.9 }}
+                className="p-1"
+              >
+                <img src={downIcon} className="w-4 h-4 opacity-50" style={{ transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)' }} alt="" />
+              </motion.button>
             </div>
 
             <AnimatePresence>
               {showHistory && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+
+                  {/* Sort Controls - Moved here for better layout on mobile */}
+                  <div className="flex justify-end mb-3">
+                    <div className="bg-gray-100 rounded-lg p-0.5 flex">
+                      {['latest', 'oldest'].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setHistorySort(type)}
+                          className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${historySort === type
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-200'
+                            }`}
+                        >
+                          {type === 'latest' ? t('common.newest') : t('common.oldest')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   <div className='max-h-80 overflow-y-auto pr-1 custom-scrollbar'>
                     {historyLoading ? (
