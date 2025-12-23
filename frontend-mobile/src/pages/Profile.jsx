@@ -885,11 +885,19 @@ const Profile = () => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              drag="y"
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.2 }}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.y > 100 || velocity.y > 500) {
+                  setShowPhotoOptions(false);
+                }
+              }}
               className="bg-white w-full max-w-md rounded-t-3xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Handle bar */}
-              <div className="flex justify-center pt-3 pb-2">
+              <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
                 <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
               </div>
 
@@ -993,11 +1001,19 @@ const Profile = () => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              drag="y"
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.2 }}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.y > 100 || velocity.y > 500) {
+                  setShowLanguageModal(false);
+                }
+              }}
               className="bg-white w-full max-w-md rounded-t-3xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Indicator Bar at Top */}
-              <div className="flex justify-center pt-3 pb-4">
+              <div className="flex justify-center pt-3 pb-4 cursor-grab active:cursor-grabbing">
                 <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
               </div>
 
@@ -1174,6 +1190,14 @@ const faqData = [
 // Help FAQ Modal Component  
 const HelpFAQModal = ({ onClose, t }) => {
   const [expandedIndex, setExpandedIndex] = useState(null);
+
+  // Prevent body scroll
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const toggleExpand = (index) => {
     setExpandedIndex(expandedIndex === index ? null : index);
