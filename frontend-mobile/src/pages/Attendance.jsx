@@ -673,34 +673,54 @@ const Attendance = () => {
 
     return (
       <motion.div key={idx} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
-        className="relative bg-white rounded-xl shadow-sm p-4 border border-gray-100 mb-3"
+        className="relative bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100 mb-3"
         style={{ borderLeft: `4px solid ${borderColor}` }}
       >
-        <div className="flex justify-between items-start">
-          <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-center space-x-2 mb-1">
-              <p className="text-xs font-semibold text-gray-500 uppercase">{format(date, "MMM dd", { locale: id })}</p>
-              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-              <p className="text-xs font-semibold text-gray-500 capitalize">{format(date, "EEEE", { locale: id })}</p>
+        {/* Responsive flex container - stacks on very small screens */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
+          {/* Left section - date, status, detail */}
+          <div className="flex-1 min-w-0">
+            {/* Date info - more compact on small screens */}
+            <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mb-1">
+              <p className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">
+                {format(date, "MMM dd", { locale: id })}
+              </p>
+              <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 rounded-full"></span>
+              <p className="text-[10px] sm:text-xs font-semibold text-gray-500 capitalize truncate">
+                {format(date, "EEEE", { locale: id })}
+              </p>
             </div>
-            <p className={`font-extrabold text-lg capitalize ${statusTextColor}`}>{status}</p>
-            {/* Detail Absensi with photo icon */}
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-xs text-gray-400">{t('attendance.detailAttendance')}</p>
+
+            {/* Status - responsive text size */}
+            <p className={`font-extrabold text-base sm:text-lg capitalize ${statusTextColor} truncate`}>
+              {status}
+            </p>
+
+            {/* Detail Absensi with photo icon - more compact */}
+            <div className="flex items-center gap-1.5 sm:gap-2 mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-400 truncate">
+                {t('attendance.detailAttendance')}
+              </p>
               {hasDetail && (
                 <button
                   onClick={handleOpenDetail}
-                  className="p-1 hover:bg-gray-50 transition-colors active:scale-95"
+                  className="p-0.5 sm:p-1 hover:bg-gray-50 transition-colors active:scale-95 flex-shrink-0"
                   title="Lihat Detail"
                 >
-                  <img src={imageIcon} alt="Detail" className="w-4 h-4" style={{ filter: 'grayscale(100%) opacity(0.5)' }} />
+                  <img src={imageIcon} alt="Detail" className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ filter: 'grayscale(100%) opacity(0.5)' }} />
                 </button>
               )}
             </div>
           </div>
-          <div className="text-right flex-shrink-0">
-            <p className="font-bold text-base text-gray-800 font-mono">{timeRange}</p>
-            <p className="text-xs text-gray-400">{format(date, "yyyy")}</p>
+
+          {/* Right section - time and year */}
+          <div className="text-left sm:text-right flex-shrink-0 sm:ml-2">
+            <p className="font-bold text-sm sm:text-base text-gray-800 font-mono whitespace-nowrap">
+              {timeRange}
+            </p>
+            <p className="text-[10px] sm:text-xs text-gray-400">
+              {format(date, "yyyy")}
+            </p>
           </div>
         </div>
       </motion.div>
