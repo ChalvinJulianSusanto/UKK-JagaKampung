@@ -169,6 +169,18 @@ const ProfileHeader = ({ user, navigate, unreadCount = 0, t }) => {
     setGreeting(getTimeBasedGreeting(currentLanguage || 'id'));
   }, [user?.photo, currentLanguage]);
 
+  // Effect: Body scroll lock for modal
+  useEffect(() => {
+    if (showPhotoOptions) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showPhotoOptions]);
+
   const handlePhotoClick = () => {
     if (!isUploading) {
       setShowPhotoOptions(true);
@@ -442,11 +454,19 @@ const ProfileHeader = ({ user, navigate, unreadCount = 0, t }) => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              drag="y"
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.2 }}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.y > 100 || velocity.y > 500) {
+                  setShowPhotoOptions(false);
+                }
+              }}
               className="bg-white w-full max-w-md rounded-t-3xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Handle bar */}
-              <div className="flex justify-center pt-3 pb-2">
+              <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
                 <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
               </div>
 
