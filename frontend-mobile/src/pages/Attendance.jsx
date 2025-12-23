@@ -444,6 +444,18 @@ const Attendance = () => {
     reader.readAsDataURL(file);
   };
 
+  // Effect to lock body scroll when ANY modal is open
+  useEffect(() => {
+    if (showPhotoOptions || showDetailModal || showWebcam || showPhotoPreview) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showPhotoOptions, showDetailModal, showWebcam, showPhotoPreview]);
+
   const handleAttendanceTypeClick = (type) => {
     if (type === 'izin') {
       setFormData({ ...formData, status: 'izin' });
@@ -1291,12 +1303,20 @@ const Attendance = () => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              drag="y"
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.2 }}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.y > 100 || velocity.y > 500) {
+                  setShowPhotoOptions(false);
+                }
+              }}
               className="bg-white w-full max-w-md rounded-t-3xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Handle bar */}
-              <div className="flex justify-center pt-3 pb-2">
-
+              <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
+                <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
               </div>
 
               {/* Title with close button */}
