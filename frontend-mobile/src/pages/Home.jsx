@@ -643,7 +643,7 @@ const PartnerRow = ({ partners }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-full px-2 py-2 shadow-sm border border-gray-100 flex items-center relative overflow-hidden"
+      className="bg-white  px-2 py-2 shadow-sm border border-gray-100 flex items-center relative overflow-hidden"
     >
       <PartnerItem partner={p1} />
 
