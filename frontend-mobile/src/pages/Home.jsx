@@ -905,6 +905,13 @@ const Home = () => {
   const { user } = useAuth();
   const { currentLanguage, t } = useLanguage();
   const [loading, setLoading] = useState(true);
+  const [recentAttendances, setRecentAttendances] = useState([]);
+  const [selectedAttendance, setSelectedAttendance] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [currentSchedule, setCurrentSchedule] = useState(null);
+  const [todayAttendances, setTodayAttendances] = useState({ masuk: null, pulang: null });
+  const [partners, setPartners] = useState([]);
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
