@@ -60,21 +60,6 @@ const iconColorStyles = {
 // Header Component
 const AnimatedHeaderMemo = memo(({ headerDate, showDefaultSubtitle, unreadCount, onNotifications, currentTime, user }) => (
   <div className="bg-white/80 backdrop-blur-md relative overflow-hidden">
-    {/* Bell button positioned absolute in top right */}
-    <div className="absolute top-3 right-4 z-20">
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        className="relative p-2 hover:bg-white/50 rounded-full transition-colors"
-        onClick={onNotifications}
-      >
-        <Bell className="w-5 h-5 text-gray-700" />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-red-500 rounded-full animate-pulse">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </motion.button>
-    </div>
 
     {/* Time with blue gradient box - centered */}
     <div className="flex flex-col items-center justify-center py-8 px-4 relative z-10">
