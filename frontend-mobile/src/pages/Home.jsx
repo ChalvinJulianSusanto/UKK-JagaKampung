@@ -920,6 +920,174 @@ const AttendanceCalendar = ({ navigate }) => {
   );
 };
 
+// --- 5. ATTENDANCE RECAP CARD ---
+const AttendanceRecap = () => {
+  const [selectedRT, setSelectedRT] = useState('all');
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const rtOptions = ['Semua RT', 'RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06'];
+
+  useEffect(() => {
+    fetchTodayRecaps();
+  }, []);
+
+  const fetchTodayRecaps = async () => {
+    try {
+      setLoading(true);
+      const { getTodayRecaps } = await import('../api/attendanceRecap');
+      const response = await getTodayRecaps();
+
+      if (response.success && response.data) {
+        const apiBaseUrl = import.meta.env.VITE_API_URL
+          ? import.meta.env.VITE_API_URL.replace('/api', '')
+          : 'http://localhost:5000';
+
+        // Format data untuk display
+        const formattedData = response.data.map(recap => {
+          let photoUrl = recap.photo;
+          if (photoUrl && photoUrl.startsWith('/') && !photoUrl.startsWith('http')) {
+            photoUrl = `${apiBaseUrl}${photoUrl}`;
+          }
+
+          return {
+            id: recap._id,
+            rt: recap.rt,
+            guards: recap.guards,
+            photo: photoUrl,
+            time: recap.time,
+            date: format(new Date(recap.date), 'dd MMMM yyyy', { locale: id })
+          };
+        });
+        setAttendanceData(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching recaps:', error);
+      setAttendanceData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredData = selectedRT === 'all'
+    ? attendanceData
+    : attendanceData.filter(item => item.rt === selectedRT);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="mb-6"
+    >
+      {/* Title */}
+      <h2 className="text-lg font-bold text-gray-800 mb-3">Rekap Kehadiran Hari Ini</h2>
+
+      {/* RT Filter Buttons */}
+      <div
+        className="flex gap-2 overflow-x-auto pb-3 mb-4"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        <style>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        {rtOptions.map((rt, index) => {
+          const rtValue = index === 0 ? 'all' : rt;
+          const isSelected = selectedRT === rtValue;
+
+          return (
+            <motion.button
+              key={rt}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedRT(rtValue)}
+              className={`flex-shrink-0 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 ${isSelected
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-300'
+                }`}
+            >
+              {rt}
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Attendance Cards */}
+      <div
+        className="flex gap-3 overflow-x-auto pb-2"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        <style>{`
+            .flex.gap - 3::-webkit-scrollbar {
+          display: none;
+          }
+        `}</style>
+        {loading ? (
+          <div className="bg-white rounded-2xl p-8 text-center w-full">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-2" />
+            <p className="text-gray-500 text-sm">Memuat data rekap...</p>
+          </div>
+        ) : filteredData.length > 0 ? (
+          filteredData.map((item) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex-shrink-0 w-72"
+            >
+              {/* Image */}
+              <div className="relative h-40 bg-gray-200">
+                <img
+                  src={item.photo}
+                  alt={`Kehadiran ${item.rt}`}
+                  className="w-full h-full object-cover"
+                />
+                {/* Top Left Badge - RT (Like "1841 hari lagi") */}
+                <div className="absolute top-0 left-0 bg-blue-100 text-blue-600 px-3 py-1.5 rounded-br-2xl font-bold text-xs shadow-sm z-10">
+                  {item.rt}
+                </div>
+
+                {/* Bottom Left Badge - Date (Like "REKOMENDASI") */}
+                <div className="absolute bottom-0 left-0 bg-[#FFECEC] text-red-500 px-3 py-1 rounded-tr-lg text-[10px] font-bold tracking-wide shadow-sm z-10 mb-0">
+                  {item.date}
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="p-4">
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Petugas Jaga</p>
+                    <p className="font-semibold text-sm text-gray-800">{item.guards.join(', ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Waktu</p>
+                    <p className="font-semibold text-sm text-blue-600">{item.time}</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <div className="bg-white rounded-2xl p-8 text-center w-full">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Clock className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-500 font-medium">Belum ada data kehadiran</p>
+            <p className="text-gray-400 text-sm mt-1">untuk {selectedRT === 'all' ? 'semua RT' : selectedRT}</p>
+          </div>
+        )}
+      </div>
+    </motion.div >
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -1079,7 +1247,8 @@ const Home = () => {
         {/* Attendance Calendar Section */}
         <AttendanceCalendar navigate={navigate} />
 
-
+        {/* Attendance Recap Section */}
+        <AttendanceRecap />
 
 
       </div>

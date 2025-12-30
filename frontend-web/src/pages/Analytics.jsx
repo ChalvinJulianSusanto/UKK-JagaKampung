@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, Area, AreaChart 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import { dashboardAPI } from '../api/dashboard';
 import { useAuth } from '../context/AuthContext';
@@ -10,26 +10,27 @@ import { TrendingUp, Users, Calendar, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format, setISOWeek, setYear, startOfISOWeek, endOfISOWeek } from 'date-fns';
 import { id } from 'date-fns/locale';
+import AttendanceRecapManager from '../components/AttendanceRecapManager';
 
 // --- HELPER: FORMAT TANGGAL (RENTANG PENUH) ---
 // Output: "17 - 23 Nov"
 const getWeekRangeLabel = (weekNum, year) => {
-    if (!weekNum) return '';
-    const currentYear = year || new Date().getFullYear();
-    
-    const dateInWeek = setISOWeek(setYear(new Date(), currentYear), weekNum);
-    const start = startOfISOWeek(dateInWeek);
-    const end = endOfISOWeek(dateInWeek);
-    
-    const startStr = format(start, 'dd', { locale: id });
-    const endStr = format(end, 'dd MMM', { locale: id });
+  if (!weekNum) return '';
+  const currentYear = year || new Date().getFullYear();
 
-    // Jika bulan sama: "17 - 23 Nov"
-    if (format(start, 'MMM') === format(end, 'MMM')) {
-         return `${startStr} - ${endStr}`;
-    }
-    // Jika beda bulan: "29 Sep - 05 Okt"
-    return `${format(start, 'dd MMM')} - ${endStr}`;
+  const dateInWeek = setISOWeek(setYear(new Date(), currentYear), weekNum);
+  const start = startOfISOWeek(dateInWeek);
+  const end = endOfISOWeek(dateInWeek);
+
+  const startStr = format(start, 'dd', { locale: id });
+  const endStr = format(end, 'dd MMM', { locale: id });
+
+  // Jika bulan sama: "17 - 23 Nov"
+  if (format(start, 'MMM') === format(end, 'MMM')) {
+    return `${startStr} - ${endStr}`;
+  }
+  // Jika beda bulan: "29 Sep - 05 Okt"
+  return `${format(start, 'dd MMM')} - ${endStr}`;
 };
 
 // --- HELPER: CUSTOM TOOLTIP ---
@@ -103,7 +104,7 @@ const Analytics = () => {
         isAdmin ? dashboardAPI.getWeeklyStats() : dashboardAPI.getUserWeeklyStats(),
         isAdmin ? dashboardAPI.getMonthlyStats() : dashboardAPI.getUserMonthlyStats(),
       ]);
-      
+
       if (weekly.success) setRawWeeklyData(weekly.data);
       if (monthly.success) setRawMonthlyData(monthly.data);
     } catch (error) {
@@ -117,67 +118,67 @@ const Analytics = () => {
 
   // --- 1. DATA MINGGUAN (Perbaikan Label & Duplikasi) ---
   const weeklyChartData = useMemo(() => {
-      // Map untuk menggabungkan data jika ada minggu yang sama
-      const weeksMap = new Map();
+    // Map untuk menggabungkan data jika ada minggu yang sama
+    const weeksMap = new Map();
 
-      rawWeeklyData.forEach(item => {
-          const weekNum = item._id.week;
-          const year = item._id.year || currentYear;
-          const key = `${year}-${weekNum}`;
+    rawWeeklyData.forEach(item => {
+      const weekNum = item._id.week;
+      const year = item._id.year || currentYear;
+      const key = `${year}-${weekNum}`;
 
-          if (!weeksMap.has(key)) {
-              weeksMap.set(key, {
-                  year,
-                  weekNum,
-                  label: getWeekRangeLabel(weekNum, year), // Label: "17 - 23 Nov"
-                  total: 0,
-                  hadir: 0,
-                  absen: 0
-              });
-          }
+      if (!weeksMap.has(key)) {
+        weeksMap.set(key, {
+          year,
+          weekNum,
+          label: getWeekRangeLabel(weekNum, year), // Label: "17 - 23 Nov"
+          total: 0,
+          hadir: 0,
+          absen: 0
+        });
+      }
 
-          const entry = weeksMap.get(key);
-          entry.total += (item.count || item.total || 0);
-          entry.hadir += (item.hadir || 0);
-          entry.absen += (item.tidak_hadir || 0);
-      });
+      const entry = weeksMap.get(key);
+      entry.total += (item.count || item.total || 0);
+      entry.hadir += (item.hadir || 0);
+      entry.absen += (item.tidak_hadir || 0);
+    });
 
-      // Konversi ke array dan urutkan berdasarkan minggu
-      return Array.from(weeksMap.values()).sort((a, b) => a.weekNum - b.weekNum);
+    // Konversi ke array dan urutkan berdasarkan minggu
+    return Array.from(weeksMap.values()).sort((a, b) => a.weekNum - b.weekNum);
   }, [rawWeeklyData, currentYear]);
 
   // --- 2. DATA BULANAN (Perbaikan "November Ganda") ---
   const monthlyChartData = useMemo(() => {
-      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-      const aggregatedData = monthNames.map(name => ({ name, total: 0, hadir: 0, absen: 0 }));
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const aggregatedData = monthNames.map(name => ({ name, total: 0, hadir: 0, absen: 0 }));
 
-      rawMonthlyData.forEach(item => {
-          const monthIndex = item._id.month - 1;
-          if (monthIndex >= 0 && monthIndex < 12) {
-              aggregatedData[monthIndex].total += (item.count || item.total || 0);
-              aggregatedData[monthIndex].hadir += (item.hadir || 0);
-              aggregatedData[monthIndex].absen += (item.tidak_hadir || 0);
-          }
-      });
+    rawMonthlyData.forEach(item => {
+      const monthIndex = item._id.month - 1;
+      if (monthIndex >= 0 && monthIndex < 12) {
+        aggregatedData[monthIndex].total += (item.count || item.total || 0);
+        aggregatedData[monthIndex].hadir += (item.hadir || 0);
+        aggregatedData[monthIndex].absen += (item.tidak_hadir || 0);
+      }
+    });
 
-      // Filter hanya bulan yang ada datanya
-      return aggregatedData.filter(d => d.total > 0);
+    // Filter hanya bulan yang ada datanya
+    return aggregatedData.filter(d => d.total > 0);
   }, [rawMonthlyData]);
 
 
   // --- 3. KPI VALUES ---
   const totalMonthlyAttendance = rawMonthlyData.reduce((acc, curr) => acc + (curr.count || curr.total || 0), 0);
-  const avgWeeklyAttendance = rawWeeklyData.length > 0 
-    ? Math.round(rawWeeklyData.reduce((acc, curr) => acc + (curr.count || curr.total || 0), 0) / rawWeeklyData.length) 
+  const avgWeeklyAttendance = rawWeeklyData.length > 0
+    ? Math.round(rawWeeklyData.reduce((acc, curr) => acc + (curr.count || curr.total || 0), 0) / rawWeeklyData.length)
     : 0;
-  
+
   const peakMonth = monthlyChartData.reduce((prev, current) => (prev.total > current.total) ? prev : current, { name: '-', total: 0 });
 
   if (loading) return <Loading fullScreen />;
 
   return (
     <div className="space-y-8 pb-10">
-      
+
       {/* HEADER */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Analisis Data</h1>
@@ -188,27 +189,27 @@ const Analytics = () => {
 
       {/* KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <KPICard 
-          title="Total Kehadiran (Semester Ini)" 
-          value={totalMonthlyAttendance} 
-          icon={Users} colorBg="bg-blue-50" colorText="text-blue-600" 
+        <KPICard
+          title="Total Kehadiran (Semester Ini)"
+          value={totalMonthlyAttendance}
+          icon={Users} colorBg="bg-blue-50" colorText="text-blue-600"
           subtitle="Akumulasi"
         />
-        <KPICard 
-          title="Rata-rata per Pekan" 
-          value={avgWeeklyAttendance} 
-          icon={Activity} colorBg="bg-purple-50" colorText="text-purple-600" 
+        <KPICard
+          title="Rata-rata per Pekan"
+          value={avgWeeklyAttendance}
+          icon={Activity} colorBg="bg-purple-50" colorText="text-purple-600"
         />
-        <KPICard 
-          title={`Puncak (${peakMonth.name})`} 
-          value={peakMonth.total} 
-          icon={TrendingUp} colorBg="bg-orange-50" colorText="text-orange-600" 
+        <KPICard
+          title={`Puncak (${peakMonth.name})`}
+          value={peakMonth.total}
+          icon={TrendingUp} colorBg="bg-orange-50" colorText="text-orange-600"
           subtitle="Tertinggi"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
+
         {/* CHART 1: TREN MINGGUAN */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div className="mb-6">
@@ -218,52 +219,52 @@ const Analytics = () => {
             </div>
             <p className="text-xs text-gray-500 ml-8">Grafik kehadiran per pekan dengan rentang tanggal.</p>
           </div>
-          
+
           <div className="h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorHadir" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                
+
                 {/* SUMBU X: Label Rentang (17 - 23 Nov) */}
-                <XAxis 
-                  dataKey="label" 
+                <XAxis
+                  dataKey="label"
                   type="category"
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 11, fill: '#6B7280' }} 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
                   dy={10}
                   padding={{ left: 30, right: 30 }}
-                  interval={0} 
+                  interval={0}
                 />
-                
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 11, fill: '#6B7280' }} 
+
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
                   allowDecimals={false}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#CBD5E1', strokeDasharray: '3 3' }} />
                 <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '13px', fontWeight: 500 }} iconType="circle" />
-                
+
                 {isAdmin ? (
-                  <Area 
-                    type="monotone" 
-                    dataKey="total" 
-                    name="Total Warga Hadir" 
-                    stroke="#3B82F6" 
+                  <Area
+                    type="monotone"
+                    dataKey="total"
+                    name="Total Warga Hadir"
+                    stroke="#3B82F6"
                     strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorTotal)" 
+                    fillOpacity={1}
+                    fill="url(#colorTotal)"
                     dot={{ r: 4, fill: '#3B82F6', stroke: 'white', strokeWidth: 2 }}
                     activeDot={{ r: 6, strokeWidth: 0 }}
                   />
@@ -277,6 +278,7 @@ const Analytics = () => {
             </ResponsiveContainer>
           </div>
         </div>
+
 
         {/* CHART 2: STATISTIK BULANAN */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -292,30 +294,30 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={40}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
+                <XAxis
+                  dataKey="name"
                   type="category"
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 11, fill: '#6B7280' }} 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
                   dy={10}
-                  tickFormatter={(val) => val.substring(0, 3)} 
+                  tickFormatter={(val) => val.substring(0, 3)}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 11, fill: '#6B7280' }} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
                   allowDecimals={false}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                 <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '13px', fontWeight: 500 }} iconType="circle" />
 
                 {isAdmin ? (
-                  <Bar 
-                    dataKey="total" 
-                    name="Total Kehadiran" 
-                    fill="#F59E0B" 
-                    radius={[8, 8, 0, 0]} 
+                  <Bar
+                    dataKey="total"
+                    name="Total Kehadiran"
+                    fill="#F59E0B"
+                    radius={[8, 8, 0, 0]}
                   />
                 ) : (
                   <>
@@ -329,6 +331,9 @@ const Analytics = () => {
         </div>
 
       </div>
+
+      {/* REKAP KEHADIRAN MANAGER (ADMIN ONLY) */}
+      {isAdmin && <AttendanceRecapManager />}
     </div>
   );
 };
