@@ -187,7 +187,11 @@ const AttendanceRecapManager = () => {
             : 'http://localhost:5000';
 
         let photoUrl = recap.photo;
-        if (photoUrl && photoUrl.startsWith('/') && !photoUrl.startsWith('http')) {
+        if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
+            photoUrl = photoUrl.replace(/\\/g, '/');
+            if (!photoUrl.startsWith('/')) {
+                photoUrl = `/${photoUrl}`;
+            }
             photoUrl = `${apiBaseUrl}${photoUrl}`;
         }
         setPhotoPreview(photoUrl);
@@ -539,7 +543,13 @@ const AttendanceRecapManager = () => {
                                         : 'http://localhost:5000';
 
                                     let photoUrl = recap.photo;
-                                    if (photoUrl && photoUrl.startsWith('/') && !photoUrl.startsWith('http')) {
+                                    if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
+                                        // Normalize path separators
+                                        photoUrl = photoUrl.replace(/\\/g, '/');
+                                        // Ensure single leading slash
+                                        if (!photoUrl.startsWith('/')) {
+                                            photoUrl = `/${photoUrl}`;
+                                        }
                                         photoUrl = `${apiBaseUrl}${photoUrl}`;
                                     }
 

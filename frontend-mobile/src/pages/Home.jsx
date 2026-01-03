@@ -945,7 +945,13 @@ const AttendanceRecap = () => {
         // Format data untuk display
         const formattedData = response.data.map(recap => {
           let photoUrl = recap.photo;
-          if (photoUrl && photoUrl.startsWith('/') && !photoUrl.startsWith('http')) {
+          if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
+            // Normalize path separators
+            photoUrl = photoUrl.replace(/\\/g, '/');
+            // Ensure single leading slash for the path
+            if (!photoUrl.startsWith('/')) {
+              photoUrl = `/${photoUrl}`;
+            }
             photoUrl = `${apiBaseUrl}${photoUrl}`;
           }
 
@@ -1041,12 +1047,17 @@ const AttendanceRecap = () => {
               animate={{ opacity: 1, x: 0 }}
               className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex-shrink-0 w-72"
             >
-              {/* Image */}
-              <div className="relative h-40 bg-gray-200">
+              <div className="relative h-40 bg-gray-100 flex items-center justify-center">
+                {/* Fallback Icon */}
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                  <MaskedIcon src={galleryIcon} size={32} color="#9CA3AF" alt="No Image" />
+                </div>
+
                 <img
                   src={item.photo}
                   alt={`Kehadiran ${item.rt}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover relative z-0"
+                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
                 {/* Top Left Badge - RT (Like "1841 hari lagi") */}
                 <div className="absolute top-0 left-0 bg-blue-100 text-blue-600 px-3 py-1.5 rounded-br-2xl font-bold text-xs shadow-sm z-10">
