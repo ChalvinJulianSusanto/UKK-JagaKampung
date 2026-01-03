@@ -355,8 +355,8 @@ const Reports = () => {
                     preview.topRT.slice(0, 3).map((rt, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
-                          <span className={`w - 5 h - 5 flex items - center justify - center rounded text - [10px] font - bold ${i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
-                            } `}>
+                          <span className={`w-5 h-5 flex items-center justify-center rounded text-[10px] font-bold ${i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                            }`}>
                             #{i + 1}
                           </span>
                           <span className="text-gray-700 font-medium">RT {rt.rt}</span>
