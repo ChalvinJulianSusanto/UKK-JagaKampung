@@ -182,9 +182,10 @@ const AttendanceRecapManager = () => {
         });
 
         // Check if photo is URL
-        const apiBaseUrl = import.meta.env.VITE_API_URL
-            ? import.meta.env.VITE_API_URL.replace('/api', '')
-            : 'http://localhost:5000';
+        const apiBaseUrl = (import.meta.env.VITE_API_URL ||
+            (window.location.hostname.includes('vercel.app')
+                ? 'https://ukk-jagakampung.onrender.com/api'
+                : 'http://localhost:5000/api')).replace('/api', '');
 
         let photoUrl = recap.photo;
         if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
@@ -538,9 +539,10 @@ const AttendanceRecapManager = () => {
                                 </tr>
                             ) : (
                                 filteredRecaps.map((recap) => {
-                                    const apiBaseUrl = import.meta.env.VITE_API_URL
-                                        ? import.meta.env.VITE_API_URL.replace('/api', '')
-                                        : 'http://localhost:5000';
+                                    const apiBaseUrl = (import.meta.env.VITE_API_URL ||
+                                        (window.location.hostname.includes('vercel.app')
+                                            ? 'https://ukk-jagakampung.onrender.com/api'
+                                            : 'http://localhost:5000/api')).replace('/api', '');
 
                                     let photoUrl = recap.photo;
                                     if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {

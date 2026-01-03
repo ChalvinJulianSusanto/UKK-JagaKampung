@@ -938,9 +938,10 @@ const AttendanceRecap = () => {
       const response = await getTodayRecaps();
 
       if (response.success && response.data) {
-        const apiBaseUrl = import.meta.env.VITE_API_URL
-          ? import.meta.env.VITE_API_URL.replace('/api', '')
-          : 'http://localhost:5000';
+        const apiBaseUrl = (import.meta.env.VITE_API_URL ||
+          (window.location.hostname.includes('vercel.app')
+            ? 'https://ukk-jagakampung.onrender.com/api'
+            : 'http://localhost:5000/api')).replace('/api', '');
 
         // Format data untuk display
         const formattedData = response.data.map(recap => {
