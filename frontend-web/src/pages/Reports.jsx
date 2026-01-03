@@ -13,6 +13,7 @@ import profitIcon from '../assets/profit.png';
 import jadwalIcon from '../assets/calendar.png';
 import barChartIcon from '../assets/bar-chart.png';
 import highIcon from '../assets/medal.png';
+import AttendanceRecapManager from '../components/AttendanceRecapManager';
 
 const RT_OPTIONS = ['01', '02', '03', '04', '05', '06'];
 
@@ -371,6 +372,10 @@ const Reports = () => {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-8">
+        <AttendanceRecapManager />
       </div>
     </div>
   );

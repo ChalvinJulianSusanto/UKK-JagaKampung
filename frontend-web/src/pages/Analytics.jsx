@@ -10,7 +10,7 @@ import { TrendingUp, Users, Calendar, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format, setISOWeek, setYear, startOfISOWeek, endOfISOWeek } from 'date-fns';
 import { id } from 'date-fns/locale';
-import AttendanceRecapManager from '../components/AttendanceRecapManager';
+
 
 // --- HELPER: FORMAT TANGGAL (RENTANG PENUH) ---
 // Output: "17 - 23 Nov"
@@ -332,9 +332,8 @@ const Analytics = () => {
 
       </div>
 
-      {/* REKAP KEHADIRAN MANAGER (ADMIN ONLY) */}
-      {isAdmin && <AttendanceRecapManager />}
     </div>
+    </div >
   );
 };
 
