@@ -938,6 +938,7 @@ const AttendanceRecap = () => {
       const response = await getTodayRecaps();
 
       if (response.success && response.data) {
+        // Get API base URL - exactly matching admin component logic
         const apiBaseUrl = (import.meta.env.VITE_API_URL ||
           (window.location.hostname.includes('vercel.app')
             ? 'https://ukk-jagakampung.onrender.com/api'
@@ -946,13 +947,18 @@ const AttendanceRecap = () => {
         // Format data untuk display
         const formattedData = response.data.map(recap => {
           let photoUrl = recap.photo;
+
+          // Only process if photo exists and is not already a full URL or data URI
           if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
-            // Normalize path separators
+            // Normalize path separators (Windows to Unix)
             photoUrl = photoUrl.replace(/\\/g, '/');
-            // Ensure single leading slash for the path
+
+            // Ensure single leading slash
             if (!photoUrl.startsWith('/')) {
               photoUrl = `/${photoUrl}`;
             }
+
+            // Construct full URL with base URL
             photoUrl = `${apiBaseUrl}${photoUrl}`;
           }
 
@@ -965,6 +971,7 @@ const AttendanceRecap = () => {
             date: format(new Date(recap.date), 'dd MMMM yyyy', { locale: id })
           };
         });
+
         setAttendanceData(formattedData);
       }
     } catch (error) {
