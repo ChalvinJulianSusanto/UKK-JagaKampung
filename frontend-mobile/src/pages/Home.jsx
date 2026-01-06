@@ -944,13 +944,8 @@ const AttendanceRecap = () => {
             ? 'https://ukk-jagakampung.onrender.com/api'
             : 'http://localhost:5000/api')).replace('/api', '');
 
-        console.log('[AttendanceRecap] API Base URL:', apiBaseUrl);
-        console.log('[AttendanceRecap] is Vercel?:', window.location.hostname.includes('vercel.app'));
-        console.log('[AttendanceRecap] VITE_API_URL:', import.meta.env.VITE_API_URL);
-
         // Format data untuk display
         const formattedData = response.data.map(recap => {
-          const originalPhotoUrl = recap.photo;
           let photoUrl = recap.photo;
 
           // Only process if photo exists and is not already a full URL or data URI
@@ -966,12 +961,6 @@ const AttendanceRecap = () => {
             // Construct full URL with base URL
             photoUrl = `${apiBaseUrl}${photoUrl}`;
           }
-
-          console.log('[AttendanceRecap] Image URL transform:', {
-            original: originalPhotoUrl,
-            final: photoUrl,
-            rt: recap.rt
-          });
 
           return {
             id: recap._id,

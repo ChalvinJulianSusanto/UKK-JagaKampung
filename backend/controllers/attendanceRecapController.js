@@ -1,5 +1,12 @@
 const AttendanceRecap = require('../models/AttendanceRecap');
 const { uploadToLocal, deleteFromLocal } = require('../utils/uploadLocal');
+const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/uploadToCloudinary');
+
+// Check if Cloudinary is configured (for production)
+const isCloudinaryConfigured =
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET;
 
 // Create new attendance recap
 exports.createRecap = async (req, res) => {
@@ -40,10 +47,21 @@ exports.createRecap = async (req, res) => {
             });
         }
 
-        // Upload photo to local storage
+        // Upload photo - use Cloudinary if configured, otherwise local storage
         let photoUrl;
         try {
-            const uploadResult = await uploadToLocal(req.file.buffer, 'recaps');
+            let uploadResult;
+
+            if (isCloudinaryConfigured) {
+                // Production: Upload to Cloudinary for persistent storage
+                uploadResult = await uploadToCloudinary(req.file.buffer, 'jagakampung/recaps');
+                console.log('Photo uploaded to Cloudinary:', uploadResult.secure_url);
+            } else {
+                // Development: Upload to local storage
+                uploadResult = await uploadToLocal(req.file.buffer, 'recaps');
+                console.log('Photo uploaded to local storage:', uploadResult.secure_url);
+            }
+
             photoUrl = uploadResult.secure_url;
         } catch (uploadError) {
             console.error('Error uploading file:', uploadError);
@@ -235,14 +253,32 @@ exports.updateRecap = async (req, res) => {
         if (req.file) {
             // Upload new photo
             try {
-                const uploadResult = await uploadToLocal(req.file.buffer, 'recaps');
+                let uploadResult;
+
+                if (isCloudinaryConfigured) {
+                    // Production: Upload to Cloudinary
+                    uploadResult = await uploadToCloudinary(req.file.buffer, 'jagakampung/recaps');
+                } else {
+                    // Development: Upload to local storage
+                    uploadResult = await uploadToLocal(req.file.buffer, 'recaps');
+                }
 
                 // Delete old photo
                 if (recap.photo) {
                     try {
-                        // Extract public_id from URL (assumes format /uploads/folder/filename)
-                        const publicId = recap.photo.replace('/uploads/', '');
-                        await deleteFromLocal(publicId);
+                        if (recap.photo.includes('cloudinary') || isCloudinaryConfigured) {
+                            // Delete from Cloudinary
+                            const urlParts = recap.photo.split('/');
+                            const publicIdWithExt = urlParts.slice(urlParts.indexOf('jagakampung')).join('/');
+                            const publicId = publicIdWithExt.replace(/\.[^/.]+$/, ''); // Remove extension
+                            await deleteFromCloudinary(publicId);
+                            console.log('Old photo deleted from Cloudinary');
+                        } else {
+                            // Delete from local storage
+                            const publicId = recap.photo.replace('/uploads/', '');
+                            await deleteFromLocal(publicId);
+                            console.log('Old photo deleted from local storage');
+                        }
                     } catch (error) {
                         console.error('Error deleting old photo:', error);
                     }
@@ -289,8 +325,19 @@ exports.deleteRecap = async (req, res) => {
         // Delete photo file
         if (recap.photo) {
             try {
-                const publicId = recap.photo.replace('/uploads/', '');
-                await deleteFromLocal(publicId);
+                if (recap.photo.includes('cloudinary')) {
+                    // Delete from Cloudinary
+                    const urlParts = recap.photo.split('/');
+                    const publicIdWithExt = urlParts.slice(urlParts.indexOf('jagakampung')).join('/');
+                    const publicId = publicIdWithExt.replace(/\.[^/.]+$/, ''); // Remove extension
+                    await deleteFromCloudinary(publicId);
+                    console.log('Photo deleted from Cloudinary');
+                } else {
+                    // Delete from local storage
+                    const publicId = recap.photo.replace('/uploads/', '');
+                    await deleteFromLocal(publicId);
+                    console.log('Photo deleted from local storage');
+                }
             } catch (error) {
                 console.error('Error deleting photo:', error);
             }
