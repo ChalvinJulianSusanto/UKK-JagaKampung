@@ -928,14 +928,15 @@ const AttendanceRecap = () => {
   const rtOptions = ['Semua RT', 'RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06'];
 
   useEffect(() => {
-    fetchTodayRecaps();
+    fetchRecentRecaps();
   }, []);
 
-  const fetchTodayRecaps = async () => {
+  const fetchRecentRecaps = async () => {
     try {
       setLoading(true);
-      const { getTodayRecaps } = await import('../api/attendanceRecap');
-      const response = await getTodayRecaps();
+      const { getAllRecaps } = await import('../api/attendanceRecap');
+      // Fetch recent 20 recaps (not limited to today only)
+      const response = await getAllRecaps({ limit: 20 });
 
       if (response.success && response.data) {
         // Get API base URL - exactly matching admin component logic
@@ -994,7 +995,7 @@ const AttendanceRecap = () => {
       className="mb-6"
     >
       {/* Title */}
-      <h2 className="text-lg font-bold text-gray-800 mb-3">Rekap Kehadiran Hari Ini</h2>
+      <h2 className="text-lg font-bold text-gray-800 mb-3">Rekap Kehadiran</h2>
 
       {/* RT Filter Buttons */}
       <div
@@ -1018,8 +1019,8 @@ const AttendanceRecap = () => {
               key={rt}
               whileTap={{ scale: 0.95 }}
               onClick={() => setSelectedRT(rtValue)}
-              className={`flex-shrink-0 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 ${isSelected
-                ? 'bg-blue-600 text-white shadow-md'
+              className={`flex-shrink-0 px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 ${isSelected
+                ? 'bg-blue-500 text-white shadow-md'
                 : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-300'
                 }`}
             >
