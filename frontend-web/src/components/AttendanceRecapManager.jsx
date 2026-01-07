@@ -9,6 +9,8 @@ import { attendanceRecapAPI } from '../api/attendanceRecap';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import gridIcon from '../assets/grid.png';
+import listIcon from '../assets/list.png';
 
 const RT_FILTERS = ['Semua', 'RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06'];
 
@@ -20,6 +22,7 @@ const AttendanceRecapManager = () => {
     const [photoPreview, setPhotoPreview] = useState(null); // State for photo preview
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
     // Refs
     const fileInputRef = useRef(null);
@@ -242,13 +245,13 @@ const AttendanceRecapManager = () => {
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
                         >
-                            <Plus size={16} />
-                            Tambah Foto
+
+                            +Tambah rekap
                         </button>
                     )}
                 </div>
 
-                {/* RT Pills Filter (Original Design for List View) */}
+                {/* RT Pills Filter with View Toggle */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     <span className="text-xs font-medium text-gray-400 mr-1 flex items-center gap-1">
                         <Filter size={12} /> Filter RT:
@@ -275,102 +278,146 @@ const AttendanceRecapManager = () => {
                             </button>
                         );
                     })}
+
+                    {/* View Toggle Button - Positioned after RT filters */}
+                    <div className="h-6 w-px bg-gray-200 mx-1"></div>
+                    <motion.button
+                        onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                        className="relative p-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 shadow-sm flex items-center justify-center"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        title={viewMode === 'grid' ? 'Ubah ke List View' : 'Ubah ke Grid View'}
+                    >
+                        <AnimatePresence mode="wait">
+                            <motion.img
+                                key={viewMode}
+                                src={viewMode === 'grid' ? gridIcon : listIcon}
+                                alt={viewMode === 'grid' ? 'Grid View' : 'List View'}
+                                className="w-4 h-4"
+                                style={{ filter: 'invert(47%) sepia(82%) saturate(1298%) hue-rotate(198deg) brightness(97%) contrast(101%)' }}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.25, ease: "easeInOut" }}
+                            />
+                        </AnimatePresence>
+                    </motion.button>
                 </div>
             </div>
 
-            {/* Form Section */}
+            {/* Form Section - Clean Minimalist Design */}
             <AnimatePresence>
                 {showForm && (
                     <motion.div
                         ref={formRef}
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="bg-white border-b border-gray-100 relative shadow-sm"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="bg-gradient-to-br from-gray-50 to-white border-b border-gray-100 overflow-hidden"
                     >
-                        <div className="p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-gray-800 text-sm">
-                                    {editingId ? 'Edit Data Rekap' : 'Upload Foto Baru'}
-                                </h3>
-                                <button onClick={resetForm} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
-                                    <X size={18} />
+                        <div className="p-8">
+                            {/* Header */}
+                            <div className="flex justify-between items-center mb-8">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-800">
+                                        {editingId ? 'Edit Rekap' : 'Tambah Rekap Baru'}
+                                    </h3>
+                                    <p className="text-xs text-gray-400 mt-1">Lengkapi data rekap kegiatan ronda</p>
+                                </div>
+                                <button
+                                    onClick={resetForm}
+                                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                                >
+                                    <X size={20} />
                                 </button>
                             </div>
 
                             <form onSubmit={handleSubmit}>
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                                    {/* Left Column: Image Upload */}
-                                    <div className="md:col-span-4 space-y-3">
-                                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Foto Bukti</label>
-
+                                    {/* Left: Image Upload */}
+                                    <div className="lg:col-span-1">
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                                            Foto Bukti
+                                        </label>
                                         <div
                                             onClick={() => fileInputRef.current?.click()}
                                             className={`
-                                                aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all relative overflow-hidden group
-                                                ${photoPreview ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50 bg-white'}
+                                                aspect-[4/3] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group
+                                                ${photoPreview
+                                                    ? 'border-blue-400 bg-blue-50/50'
+                                                    : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50/30 bg-white'
+                                                }
                                             `}
                                         >
                                             {photoPreview ? (
                                                 <>
                                                     <img src={photoPreview} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <span className="text-white text-xs font-medium flex items-center gap-1">
-                                                            <Edit2 size={12} /> Ganti Foto
-                                                        </span>
+                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <div className="text-center">
+                                                            <Edit2 size={24} className="text-white mx-auto mb-2" />
+                                                            <span className="text-white text-sm font-medium">Ganti Foto</span>
+                                                        </div>
                                                     </div>
                                                 </>
                                             ) : (
-                                                <div className="p-4">
-                                                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center shadow-sm mx-auto mb-3 text-blue-500 group-hover:scale-110 transition-transform">
-                                                        <Upload size={22} />
+                                                <div className="text-center p-6">
+                                                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                                        <Upload size={28} className="text-blue-500" />
                                                     </div>
-                                                    <p className="text-sm font-medium text-gray-700">Klik untuk upload</p>
-                                                    <p className="text-[11px] text-gray-400 mt-1">Format: JPG, PNG (Max 5MB)</p>
+                                                    <p className="text-sm font-semibold text-gray-700">Klik untuk upload</p>
+                                                    <p className="text-xs text-gray-400 mt-1">JPG, PNG • Max 5MB</p>
                                                 </div>
                                             )}
                                             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                                         </div>
 
-                                        {/* Mobile Camera Button */}
-                                        <div className="md:hidden">
+                                        {/* Mobile Camera */}
+                                        <div className="md:hidden mt-3">
                                             <button
                                                 type="button"
                                                 onClick={() => cameraInputRef.current?.click()}
-                                                className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-2 shadow-lg shadow-blue-200 active:scale-95 transition-transform"
+                                                className="w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-2 shadow-lg shadow-blue-200 active:scale-95 transition-transform"
                                             >
-                                                <Camera size={18} /> Ambil Foto Langsung
+                                                <Camera size={18} /> Ambil Foto
                                             </button>
                                             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
                                         </div>
                                     </div>
 
-                                    {/* Right Column: Inputs */}
-                                    <div className="md:col-span-8 space-y-5">
-                                        <div className="grid grid-cols-2 gap-5">
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-gray-500">Lokasi RT</label>
+                                    {/* Right: Form Fields */}
+                                    <div className="lg:col-span-2 space-y-6">
+
+                                        {/* Row 1: RT & Date */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {/* RT Selector */}
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                                    Lokasi RT
+                                                </label>
                                                 <div className={`relative ${isFormRTOpen ? 'z-50' : 'z-30'}`} ref={formRTRef}>
-                                                    <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
                                                     <button
                                                         type="button"
                                                         onClick={() => { setIsFormRTOpen(!isFormRTOpen); setIsFormTimeOpen(false); }}
-                                                        className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all hover:border-gray-300 shadow-sm"
+                                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
                                                     >
-                                                        <span className="text-gray-700 font-medium">{formData.rt}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            <MapPin size={18} className="text-blue-500" />
+                                                            <span className="text-gray-700 font-medium">{formData.rt}</span>
+                                                        </div>
                                                         <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isFormRTOpen ? 'rotate-180' : ''}`} />
                                                     </button>
                                                     <AnimatePresence>
                                                         {isFormRTOpen && (
                                                             <motion.div
-                                                                initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                                exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                                                                transition={{ duration: 0.15 }}
-                                                                className="absolute top-full mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden"
+                                                                initial={{ opacity: 0, y: -8 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                exit={{ opacity: 0, y: -8 }}
+                                                                transition={{ duration: 0.2, ease: 'easeOut' }}
+                                                                className="absolute top-full mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-2xl z-50 overflow-hidden"
                                                             >
-                                                                <div className="max-h-56 overflow-y-auto p-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                                                                <div className="p-2 max-h-48 overflow-y-auto">
                                                                     {RT_FILTERS.filter(r => r !== 'Semua').map(rt => (
                                                                         <div
                                                                             key={rt}
@@ -379,12 +426,15 @@ const AttendanceRecapManager = () => {
                                                                                 setIsFormRTOpen(false);
                                                                             }}
                                                                             className={`
-                                                                                px-3 py-2.5 text-sm cursor-pointer rounded-lg transition-colors flex items-center justify-between
-                                                                                ${formData.rt === rt ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}
+                                                                                px-4 py-2.5 text-sm cursor-pointer rounded-lg transition-all flex items-center justify-between
+                                                                                ${formData.rt === rt
+                                                                                    ? 'bg-blue-50 text-blue-600 font-semibold'
+                                                                                    : 'text-gray-600 hover:bg-gray-50'
+                                                                                }
                                                                             `}
                                                                         >
                                                                             {rt}
-                                                                            {formData.rt === rt && <CheckCircle2 size={14} />}
+                                                                            {formData.rt === rt && <CheckCircle2 size={16} />}
                                                                         </div>
                                                                     ))}
                                                                 </div>
@@ -394,103 +444,114 @@ const AttendanceRecapManager = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-gray-500">Tanggal</label>
-                                                <input
-                                                    type="date"
-                                                    name="date"
-                                                    value={formData.date}
-                                                    onChange={handleInputChange}
-                                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm text-gray-700"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-5">
-                                            <div className="space-y-1.5">
-                                                <div className="flex justify-between items-center">
-                                                    <label className="text-xs font-semibold text-gray-500">Jam Ronda</label>
-                                                </div>
-                                                <div className={`relative ${isFormTimeOpen ? 'z-50' : 'z-20'}`} ref={formTimeRef}>
-                                                    <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => { setIsFormTimeOpen(!isFormTimeOpen); setIsFormRTOpen(false); }}
-                                                        className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all hover:border-gray-300 shadow-sm"
-                                                    >
-                                                        <span className="text-gray-700 font-medium">{formData.time} WIB</span>
-                                                        <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isFormTimeOpen ? 'rotate-180' : ''}`} />
-                                                    </button>
-                                                    <AnimatePresence>
-                                                        {isFormTimeOpen && (
-                                                            <motion.div
-                                                                initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                                exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                                                                transition={{ duration: 0.15 }}
-                                                                className="absolute top-full mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden"
-                                                            >
-                                                                <div className="max-h-56 overflow-y-auto p-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-                                                                    {[
-                                                                        "22:00", "22:30", "23:00", "23:30",
-                                                                        "00:00", "00:30", "01:00", "01:30",
-                                                                        "02:00", "02:30", "03:00"
-                                                                    ].map(t => (
-                                                                        <div
-                                                                            key={t}
-                                                                            onClick={() => {
-                                                                                setFormData(prev => ({ ...prev, time: t }));
-                                                                                setIsFormTimeOpen(false);
-                                                                            }}
-                                                                            className={`
-                                                                                px-3 py-2.5 text-sm cursor-pointer rounded-lg transition-colors flex items-center justify-between
-                                                                                ${formData.time === t ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}
-                                                                            `}
-                                                                        >
-                                                                            {t} WIB
-                                                                            {formData.time === t && <CheckCircle2 size={14} />}
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-gray-500">Petugas</label>
+                                            {/* Date Picker */}
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                                    Tanggal
+                                                </label>
                                                 <div className="relative">
-                                                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" />
                                                     <input
-                                                        type="text"
-                                                        name="guards"
-                                                        value={formData.guards}
+                                                        type="date"
+                                                        name="date"
+                                                        value={formData.date}
                                                         onChange={handleInputChange}
-                                                        placeholder="Nama petugas..."
-                                                        className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm"
+                                                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm text-gray-700"
                                                     />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-50">
+                                        {/* Row 2: Time (Hour & Minute) & Guards */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {/* Time Picker - Hour & Minute Dropdowns */}
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                                    Jam Ronda
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    {/* Hour Select */}
+                                                    <div className="relative flex-1">
+                                                        <select
+                                                            value={formData.time.split(':')[0] || '22'}
+                                                            onChange={(e) => {
+                                                                const currentMinute = formData.time.split(':')[1] || '00';
+                                                                setFormData(prev => ({ ...prev, time: `${e.target.value}:${currentMinute}` }));
+                                                            }}
+                                                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-center font-medium text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm appearance-none cursor-pointer hover:border-gray-300"
+                                                        >
+                                                            {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                                                                <option key={hour} value={hour}>{hour}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                    </div>
+
+                                                    <span className="text-xl font-bold text-gray-400">:</span>
+
+                                                    {/* Minute Select */}
+                                                    <div className="relative flex-1">
+                                                        <select
+                                                            value={formData.time.split(':')[1] || '00'}
+                                                            onChange={(e) => {
+                                                                const currentHour = formData.time.split(':')[0] || '22';
+                                                                setFormData(prev => ({ ...prev, time: `${currentHour}:${e.target.value}` }));
+                                                            }}
+                                                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-center font-medium text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm appearance-none cursor-pointer hover:border-gray-300"
+                                                        >
+                                                            {['00', '15', '30', '45'].map(minute => (
+                                                                <option key={minute} value={minute}>{minute}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                    </div>
+
+                                                    <span className="text-sm font-medium text-gray-400 ml-1">WIB</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Guards Input */}
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                                    Nama Petugas
+                                                </label>
+                                                <div className="relative">
+                                                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+                                                    <input
+                                                        type="text"
+                                                        name="guards"
+                                                        value={formData.guards}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Pisahkan dengan koma..."
+                                                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm placeholder:text-gray-400"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
                                             <button
                                                 type="button"
                                                 onClick={resetForm}
-                                                className="px-5 py-2.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                                                className="px-6 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
                                             >
                                                 Batal
                                             </button>
                                             <button
                                                 type="submit"
                                                 disabled={isSubmitting}
-                                                className="px-6 py-2.5 text-xs font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-200 disabled:opacity-70 transition-all active:scale-95"
+                                                className="px-8 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-200/50 disabled:opacity-70 transition-all active:scale-95"
                                             >
-                                                {isSubmitting ? 'Menyimpan...' : (
+                                                {isSubmitting ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                        Menyimpan...
+                                                    </>
+                                                ) : (
                                                     <>
                                                         <Save size={16} />
-                                                        {editingId ? 'Simpan Perubahan' : 'Upload Sekarang'}
+                                                        {editingId ? 'Simpan' : 'Upload'}
                                                     </>
                                                 )}
                                             </button>
@@ -503,122 +564,242 @@ const AttendanceRecapManager = () => {
                 )}
             </AnimatePresence>
 
-            {/* List and Table */}
-            <div className="bg-white">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] uppercase text-gray-400 font-semibold tracking-wider">
-                                <th className="px-6 py-3">Bukti Foto</th>
-                                <th className="px-6 py-3">Waktu & Lokasi</th>
-                                <th className="px-6 py-3">Daftar Petugas</th>
-                                <th className="px-6 py-3 text-right">Opsi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
+            {/* Content Area - Grid or List View */}
+            <div className="bg-white p-6">
+                <AnimatePresence mode="wait">
+                    {viewMode === 'grid' ? (
+                        /* GRID VIEW */
+                        <motion.div
+                            key="grid-view"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                        >
                             {loading ? (
-                                <tr>
-                                    <td colSpan="4" className="px-6 py-10 text-center text-gray-400 text-sm">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                            <span>Memuat data...</span>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <div className="flex flex-col items-center justify-center py-20">
+                                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                                    <span className="text-gray-400 text-sm">Memuat data...</span>
+                                </div>
                             ) : filteredRecaps.length === 0 ? (
-                                <tr>
-                                    <td colSpan="4" className="px-6 py-12 text-center">
-                                        <div className="flex flex-col items-center justify-center text-gray-400">
-                                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                                                <Search size={20} />
-                                            </div>
-                                            <p className="text-sm font-medium text-gray-600">Tidak ada data ditemukan</p>
-                                            <p className="text-xs mt-1">Coba ubah filter atau tambah data baru.</p>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                        <Search size={24} />
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-600">Tidak ada data ditemukan</p>
+                                    <p className="text-xs mt-1">Coba ubah filter atau tambah data baru.</p>
+                                </div>
                             ) : (
-                                filteredRecaps.map((recap) => {
-                                    const apiBaseUrl = (import.meta.env.VITE_API_URL ||
-                                        (window.location.hostname.includes('vercel.app')
-                                            ? 'https://ukk-jagakampung.onrender.com/api'
-                                            : 'http://localhost:5000/api')).replace('/api', '');
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filteredRecaps.map((recap, index) => {
+                                        const apiBaseUrl = (import.meta.env.VITE_API_URL ||
+                                            (window.location.hostname.includes('vercel.app')
+                                                ? 'https://ukk-jagakampung.onrender.com/api'
+                                                : 'http://localhost:5000/api')).replace('/api', '');
 
-                                    let photoUrl = recap.photo;
-                                    if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
-                                        // Normalize path separators
-                                        photoUrl = photoUrl.replace(/\\/g, '/');
-                                        // Ensure single leading slash
-                                        if (!photoUrl.startsWith('/')) {
-                                            photoUrl = `/${photoUrl}`;
+                                        let photoUrl = recap.photo;
+                                        if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
+                                            photoUrl = photoUrl.replace(/\\/g, '/');
+                                            if (!photoUrl.startsWith('/')) {
+                                                photoUrl = `/${photoUrl}`;
+                                            }
+                                            photoUrl = `${apiBaseUrl}${photoUrl}`;
                                         }
-                                        photoUrl = `${apiBaseUrl}${photoUrl}`;
-                                    }
 
-                                    return (
-                                        <motion.tr
-                                            key={recap._id}
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            className="hover:bg-blue-50/30 transition-colors group"
-                                        >
-                                            <td className="px-6 py-3">
-                                                <div className="w-20 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-100 shadow-sm group-hover:shadow transition-all relative cursor-pointer" onClick={() => window.open(photoUrl, '_blank')}>
+                                        return (
+                                            <motion.div
+                                                key={recap._id}
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: index * 0.05, duration: 0.4, ease: "easeInOut" }}
+                                                className="group bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                                            >
+                                                {/* Photo */}
+                                                <div className="relative h-48 bg-gray-100 overflow-hidden cursor-pointer" onClick={() => window.open(photoUrl, '_blank')}>
                                                     <img
                                                         src={photoUrl}
                                                         alt="Bukti"
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                         onError={(e) => { e.target.style.display = 'none'; }}
                                                     />
-                                                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-3">
-                                                <div className="flex flex-col">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                                                            {recap.rt}
-                                                        </span>
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                                    {/* RT Badge */}
+                                                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-lg border border-blue-500">
+                                                        {recap.rt}
                                                     </div>
-                                                    <span className="text-xs text-gray-500 font-medium">
-                                                        {format(new Date(recap.date), 'dd MMM yyyy', { locale: id })} • <span className="text-gray-700">{recap.time}</span>
-                                                    </span>
+
+                                                    {/* Action Buttons */}
+                                                    <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleEdit(recap); }}
+                                                            className="p-2 bg-white/90 backdrop-blur-sm hover:bg-blue-50 text-blue-600 rounded-lg transition-colors shadow-lg"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(recap._id); }}
+                                                            className="p-2 bg-white/90 backdrop-blur-sm hover:bg-red-50 text-red-600 rounded-lg transition-colors shadow-lg"
+                                                            title="Hapus"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-3">
-                                                <div className="flex flex-wrap gap-1.5 max-w-[200px]">
-                                                    {recap.guards.map((guard, idx) => (
-                                                        <span key={idx} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[10px] border border-gray-200">
-                                                            {guard}
-                                                        </span>
-                                                    ))}
+
+                                                {/* Info */}
+                                                <div className="p-4 space-y-3">
+                                                    {/* Date & Time */}
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                        <Calendar size={14} className="text-blue-500" />
+                                                        <span className="font-medium">{format(new Date(recap.date), 'dd MMM yyyy', { locale: id })}</span>
+                                                        <span>•</span>
+                                                        <Clock size={14} className="text-blue-500" />
+                                                        <span className="font-medium text-gray-700">{recap.time}</span>
+                                                    </div>
+
+                                                    {/* Guards */}
+                                                    <div>
+                                                        <p className="text-xs text-gray-400 mb-1.5">Petugas Jaga</p>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {recap.guards.map((guard, idx) => (
+                                                                <span key={idx} className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-xs border border-gray-200">
+                                                                    {guard}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-3 text-right">
-                                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => handleEdit(recap)}
-                                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit2 size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(recap._id)}
-                                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </motion.tr>
-                                    );
-                                })
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
                             )}
-                        </tbody>
-                    </table>
-                </div>
+                        </motion.div>
+                    ) : (
+                        /* LIST VIEW (TABLE) */
+                        <motion.div
+                            key="list-view"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                            className="overflow-x-auto"
+                        >
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] uppercase text-gray-400 font-semibold tracking-wider">
+                                        <th className="px-6 py-3">Bukti Foto</th>
+                                        <th className="px-6 py-3">Waktu & Lokasi</th>
+                                        <th className="px-6 py-3">Daftar Petugas</th>
+                                        <th className="px-6 py-3 text-right">Opsi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="4" className="px-6 py-10 text-center text-gray-400 text-sm">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    <span>Memuat data...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : filteredRecaps.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="4" className="px-6 py-12 text-center">
+                                                <div className="flex flex-col items-center justify-center text-gray-400">
+                                                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                                                        <Search size={20} />
+                                                    </div>
+                                                    <p className="text-sm font-medium text-gray-600">Tidak ada data ditemukan</p>
+                                                    <p className="text-xs mt-1">Coba ubah filter atau tambah data baru.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredRecaps.map((recap) => {
+                                            const apiBaseUrl = (import.meta.env.VITE_API_URL ||
+                                                (window.location.hostname.includes('vercel.app')
+                                                    ? 'https://ukk-jagakampung.onrender.com/api'
+                                                    : 'http://localhost:5000/api')).replace('/api', '');
+
+                                            let photoUrl = recap.photo;
+                                            if (photoUrl && !photoUrl.startsWith('http') && !photoUrl.startsWith('data:')) {
+                                                photoUrl = photoUrl.replace(/\\/g, '/');
+                                                if (!photoUrl.startsWith('/')) {
+                                                    photoUrl = `/${photoUrl}`;
+                                                }
+                                                photoUrl = `${apiBaseUrl}${photoUrl}`;
+                                            }
+
+                                            return (
+                                                <motion.tr
+                                                    key={recap._id}
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="hover:bg-blue-50/30 transition-colors group"
+                                                >
+                                                    <td className="px-6 py-3">
+                                                        <div className="w-20 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-100 shadow-sm group-hover:shadow transition-all relative cursor-pointer" onClick={() => window.open(photoUrl, '_blank')}>
+                                                            <img
+                                                                src={photoUrl}
+                                                                alt="Bukti"
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-3">
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                                    {recap.rt}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-xs text-gray-500 font-medium">
+                                                                {format(new Date(recap.date), 'dd MMM yyyy', { locale: id })} • <span className="text-gray-700">{recap.time}</span>
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-3">
+                                                        <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                                                            {recap.guards.map((guard, idx) => (
+                                                                <span key={idx} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[10px] border border-gray-200">
+                                                                    {guard}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-3 text-right">
+                                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={() => handleEdit(recap)}
+                                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(recap._id)}
+                                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Hapus"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </motion.tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

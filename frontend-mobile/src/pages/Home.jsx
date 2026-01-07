@@ -1019,12 +1019,19 @@ const AttendanceRecap = () => {
               key={rt}
               whileTap={{ scale: 0.95 }}
               onClick={() => setSelectedRT(rtValue)}
-              className={`flex-shrink-0 px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 ${isSelected
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-300'
+              className={`relative flex-shrink-0 px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap ${isSelected
+                ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-sm'
+                : 'bg-white text-gray-500 border border-gray hover:bg-gray-50 '
                 }`}
             >
               {rt}
+              {isSelected && (
+                <motion.div
+                  layoutId="activeRTFilter"
+                  className="absolute inset-0 border border-blue-200 rounded-full"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
             </motion.button>
           );
         })}
@@ -1069,7 +1076,7 @@ const AttendanceRecap = () => {
                   onError={(e) => { e.target.style.display = 'none'; }}
                 />
                 {/* Top Left Badge - RT (Like "1841 hari lagi") */}
-                <div className="absolute top-0 left-0 bg-blue-100 text-blue-600 px-3 py-1.5 rounded-br-2xl font-bold text-xs shadow-sm z-10">
+                <div className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1.5 rounded-br-2xl font-bold text-xs shadow-sm z-10">
                   {item.rt}
                 </div>
 
