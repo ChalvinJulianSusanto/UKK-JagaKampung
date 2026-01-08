@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 // Assets
 import logoPutih from '../assets/putih.png';
-import googleIcon from '../assets/google.png';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Refs
   const cardRef = useRef(null);
@@ -115,8 +116,23 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    toast('Login dengan Google akan segera hadir!', { icon: '🚀' });
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setGoogleLoading(true);
+    try {
+      const result = await loginWithGoogle(credentialResponse.credential);
+      if (result.success) {
+        navigate('/', { replace: true });
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast.error('Google login gagal');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Google login gagal. Silakan coba lagi.');
   };
 
   // Touch handling with passive: false for immediate response
@@ -372,14 +388,25 @@ const Login = () => {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-gray-200 rounded-xl hover:bg-gray-50"
-          >
-            <img src={googleIcon} alt="Google" className="w-5 h-5" />
-            <span className="text-blue-500 font-semibold">Sign in with Google</span>
-          </button>
+          {/* Google Sign In */}
+          <div className="flex justify-center">
+            {googleLoading ? (
+              <div className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-gray-200 rounded-xl bg-gray-50">
+                <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                <span className="text-gray-500 font-medium">Memproses...</span>
+              </div>
+            ) : (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                width="100%"
+                text="signin_with"
+                shape="rectangular"
+              />
+            )}
+          </div>
 
           <div className="mt-10 pt-6 border-t border-gray-100">
             <p className="text-center text-xs text-gray-400">© 2025 JagaKampung. All rights reserved.</p>

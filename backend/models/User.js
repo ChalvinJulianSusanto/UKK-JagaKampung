@@ -17,9 +17,9 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password harus diisi'],
       minlength: 6,
       select: false,
+      // Password not required for Google OAuth users
     },
     phone: {
       type: String,
@@ -27,8 +27,8 @@ const userSchema = new mongoose.Schema(
     },
     rt: {
       type: String,
-      required: [true, 'RT harus dipilih'],
       enum: ['01', '02', '03', '04', '05', '06'],
+      // RT can be set later for Google users
     },
     role: {
       type: String,
@@ -44,6 +44,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Google OAuth fields
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows multiple null values
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
+    },
   },
   {
     timestamps: true,
@@ -52,8 +63,9 @@ const userSchema = new mongoose.Schema(
 
 // Hash password sebelum disimpan
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
+  // Skip if no password or password not modified
+  if (!this.password || !this.isModified('password')) {
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
@@ -61,6 +73,7 @@ userSchema.pre('save', async function (next) {
 
 // Method untuk check password
 userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

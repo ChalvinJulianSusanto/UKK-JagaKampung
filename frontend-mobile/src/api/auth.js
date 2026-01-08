@@ -31,9 +31,9 @@ export const getMe = async () => {
 // Update user profile
 export const updateProfile = async (data) => {
   const formDataClient = createFormDataClient();
-  
+
   let payload;
-  
+
   if (data instanceof FormData) {
     payload = data;
   } else {
@@ -57,4 +57,10 @@ export const logout = () => {
   sessionStorage.removeItem('token');
   sessionStorage.removeItem('user');
   window.location.href = '/login';
+};
+
+// Google OAuth login
+export const googleLogin = async (credential) => {
+  const response = await client.post('/auth/google', { credential });
+  return response.data;
 };

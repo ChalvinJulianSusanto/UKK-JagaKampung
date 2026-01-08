@@ -120,6 +120,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (credential) => {
+    try {
+      const response = await authAPI.googleLogin(credential);
+
+      if (response.success && response.data) {
+        const { token, ...userData } = response.data;
+
+        if (!token) {
+          throw new Error('Token tidak ditemukan dalam response');
+        }
+
+        // Store in localStorage for Google login (remember forever)
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+
+        setUser(userData);
+        setIsAuthenticated(true);
+
+        toast.success(`Selamat datang, ${userData.name}!`);
+        return { success: true, user: userData };
+      } else {
+        throw new Error(response.message || 'Google login gagal');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      const message = error.response?.data?.message || error.message || 'Google login gagal';
+      toast.error(message);
+      return { success: false, message };
+    }
+  };
+
   const logout = () => {
     // Clear storage
     localStorage.removeItem('token');
@@ -160,6 +191,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     isAuthenticated,
     login,
+    loginWithGoogle,
     register,
     logout,
     updateUser,

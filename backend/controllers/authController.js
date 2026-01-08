@@ -2,6 +2,10 @@ const User = require('../models/User');
 const { generateToken } = require('../middleware/auth');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/uploadToCloudinary');
 const { uploadToLocal, deleteFromLocal } = require('../utils/uploadLocal');
+const { OAuth2Client } = require('google-auth-library');
+
+// Initialize Google OAuth client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Register new user
 // @route   POST /api/auth/register
@@ -293,5 +297,88 @@ exports.updateProfile = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Login/Register with Google
+// @route   POST /api/auth/google
+// @access  Public
+exports.googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google credential is required',
+      });
+    }
+
+    // Verify Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Check if user exists with this Google ID
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Check if user exists with this email (registered with email/password)
+      user = await User.findOne({ email });
+
+      if (user) {
+        // Link Google account to existing user
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        if (!user.photo && picture) {
+          user.photo = picture;
+        }
+        await user.save();
+      } else {
+        // Create new user with Google account
+        user = await User.create({
+          name,
+          email,
+          googleId,
+          authProvider: 'google',
+          photo: picture || null,
+          // RT will be set later by user
+        });
+      }
+    }
+
+    // Check if user is banned
+    if (user.status === 'banned') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akun Anda telah diblokir. Silakan hubungi admin.',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        rt: user.rt,
+        role: user.role,
+        status: user.status,
+        photo: user.photo,
+        authProvider: user.authProvider,
+        token: generateToken(user._id),
+      },
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Google authentication failed: ' + error.message,
+    });
   }
 };
