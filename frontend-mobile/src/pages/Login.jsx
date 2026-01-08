@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, useMotionValue, useTransform, animate, PanInfo } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -13,7 +13,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const contentRef = useRef(null);
+  const sheetRef = useRef(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -23,12 +23,15 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Bottom sheet animation
-  const sheetY = useMotionValue(0);
+  // Sheet position state
+  const [sheetPosition, setSheetPosition] = useState('bottom'); // 'bottom' or 'top'
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [currentTranslate, setCurrentTranslate] = useState(0);
 
-  // Constraints for the sheet
-  const minY = -180; // Maximum scroll up (card stops here, leaving some blue visible)
-  const maxY = 0;    // Initial position (card at bottom)
+  // Position values (in pixels from bottom of screen)
+  const bottomPosition = 0;  // Card at initial position
+  const topPosition = -200;  // Card moved up by 200px
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,66 +87,91 @@ const Login = () => {
     });
   };
 
-  // Handle drag end - snap to nearest position
-  const handleDragEnd = (event, info) => {
-    const velocity = info.velocity.y;
-    const currentY = sheetY.get();
+  // Touch handlers for the handle bar
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setStartY(e.touches[0].clientY);
+  };
 
-    // If swiped up fast or dragged past halfway, snap to top
-    if (velocity < -500 || currentY < minY / 2) {
-      animate(sheetY, minY, { type: 'spring', damping: 30, stiffness: 300 });
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+
+    const currentY = e.touches[0].clientY;
+    const diff = startY - currentY;
+
+    // Calculate new translate value
+    const baseTranslate = sheetPosition === 'top' ? topPosition : bottomPosition;
+    let newTranslate = baseTranslate - diff;
+
+    // Clamp the value
+    newTranslate = Math.max(topPosition, Math.min(bottomPosition, newTranslate));
+
+    setCurrentTranslate(newTranslate);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+
+    // Determine final position based on current translate
+    const threshold = (topPosition + bottomPosition) / 2;
+
+    if (currentTranslate < threshold) {
+      setSheetPosition('top');
+      setCurrentTranslate(topPosition);
     } else {
-      // Otherwise snap back to bottom
-      animate(sheetY, maxY, { type: 'spring', damping: 30, stiffness: 300 });
+      setSheetPosition('bottom');
+      setCurrentTranslate(bottomPosition);
     }
   };
 
+  // Get current translateY value
+  const getTranslateY = () => {
+    if (isDragging) {
+      return currentTranslate;
+    }
+    return sheetPosition === 'top' ? topPosition : bottomPosition;
+  };
+
   return (
-    <div className="h-screen w-full overflow-hidden relative">
+    <div className="h-screen w-full overflow-hidden relative bg-gradient-to-b from-blue-600 to-blue-500">
       {/* Fixed Blue Background with Logo */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-600 to-blue-500">
-        <div className="flex flex-col items-center justify-center pt-16">
-          {/* Logo */}
-          <img
-            src={logoPutih}
-            alt="JagaKampung Logo"
-            className="h-20 object-contain"
-          />
-          <p className="text-white/80 text-sm mt-3 font-medium">
-            Sistem Absensi Ronda Malam
-          </p>
-        </div>
+      <div className="absolute inset-0 flex flex-col items-center pt-16">
+        {/* Logo */}
+        <img
+          src={logoPutih}
+          alt="JagaKampung Logo"
+          className="h-20 object-contain"
+        />
+        <p className="text-white/80 text-sm mt-3 font-medium">
+          Sistem Absensi Ronda Malam
+        </p>
       </div>
 
-      {/* Draggable White Card (Bottom Sheet) */}
-      <motion.div
-        style={{ y: sheetY }}
-        drag="y"
-        dragConstraints={{ top: minY, bottom: maxY }}
-        dragElastic={0.1}
-        onDragEnd={handleDragEnd}
-        initial={{ y: 0 }}
-        className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl cursor-grab active:cursor-grabbing"
-        // Position the card so it shows at bottom initially with some content visible
-        // Top position: enough to show blue background with logo
-        // Using top: 42% means card takes about 58% of screen initially
-        // When dragged up by 180px (minY), it will cover more but still show ~20% blue
+      {/* White Card (Bottom Sheet) */}
+      <div
+        ref={sheetRef}
+        className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl overflow-hidden"
         style={{
-          y: sheetY,
-          top: '42%',
-          minHeight: '100vh'
+          top: '38%',
+          height: 'calc(100vh - 38% + 200px)', // Extra height for when pulled up
+          transform: `translateY(${getTranslateY()}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)'
         }}
       >
-        {/* Drag Handle Indicator */}
-        <div className="flex justify-center pt-4 pb-2">
+        {/* Drag Handle - Only this area responds to touch drag */}
+        <div
+          className="flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
         {/* Card Content - Scrollable */}
         <div
-          ref={contentRef}
           className="px-6 pb-10 overflow-y-auto"
-          style={{ maxHeight: 'calc(100vh - 50px)' }}
+          style={{ maxHeight: 'calc(100vh - 100px)' }}
         >
           {/* Welcome Header */}
           <div className="mb-6">
@@ -255,7 +283,7 @@ const Login = () => {
             </p>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
