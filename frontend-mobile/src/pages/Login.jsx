@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Button, Input } from '../components/common';
 import toast from 'react-hot-toast';
 
 // Assets
@@ -13,7 +12,6 @@ import googleIcon from '../assets/google.png';
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const scrollContainerRef = useRef(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -21,13 +19,8 @@ const Login = () => {
     password: '',
   });
 
-  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
-  // For scroll-based card animation
-  const [scrollY, setScrollY] = useState(0);
-  const [cardExpanded, setCardExpanded] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -65,7 +58,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const result = await login(formData, rememberMe);
+      const result = await login(formData, true);
 
       if (result.success) {
         navigate('/', { replace: true });
@@ -78,77 +71,39 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Placeholder for Google login functionality
     toast('Login dengan Google akan segera hadir!', {
       icon: '🚀',
     });
   };
 
-  // Handle scroll to expand/collapse card
-  const handleScroll = (e) => {
-    const scrollTop = e.target.scrollTop;
-    setScrollY(scrollTop);
-
-    // If scrolled more than 50px, consider card as expanded
-    if (scrollTop > 50) {
-      setCardExpanded(true);
-    } else {
-      setCardExpanded(false);
-    }
-  };
-
   return (
-    <div className="h-screen w-full overflow-hidden relative bg-blue-500">
-      {/* Blue Background Header Area with Logo */}
-      <div
-        className="absolute top-0 left-0 right-0 bg-gradient-to-b from-blue-600 to-blue-500 flex flex-col items-center justify-center transition-all duration-300"
-        style={{
-          height: cardExpanded ? '15vh' : '45vh',
-          paddingTop: cardExpanded ? '20px' : '0'
-        }}
-      >
+    <div className="min-h-screen w-full bg-blue-500 relative">
+      {/* Fixed Blue Background with Logo */}
+      <div className="fixed top-0 left-0 right-0 h-[280px] bg-gradient-to-b from-blue-600 to-blue-500 flex flex-col items-center justify-center z-0">
         {/* Logo */}
-        <motion.img
+        <img
           src={logoPutih}
           alt="JagaKampung Logo"
-          className="object-contain transition-all duration-300"
-          style={{
-            height: cardExpanded ? '40px' : '80px',
-            opacity: 1
-          }}
+          className="h-20 object-contain"
         />
-        {!cardExpanded && (
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-white/80 text-sm mt-3 font-medium"
-          >
-            Sistem Absensi Ronda Malam
-          </motion.p>
-        )}
+        <p className="text-white/80 text-sm mt-3 font-medium">
+          Sistem Absensi Ronda Malam
+        </p>
       </div>
 
-      {/* Scrollable White Card Container */}
-      <div
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        className="absolute bottom-0 left-0 right-0 overflow-y-auto transition-all duration-300"
-        style={{
-          top: cardExpanded ? '12vh' : '40vh',
-          scrollBehavior: 'smooth'
-        }}
-      >
+      {/* Scrollable Container */}
+      <div className="relative z-10 pt-[220px] min-h-screen">
         {/* White Card */}
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{
             type: 'spring',
-            damping: 25,
+            damping: 30,
             stiffness: 200,
             delay: 0.1
           }}
-          className="bg-white rounded-t-[32px] min-h-full shadow-2xl"
+          className="bg-white rounded-t-[32px] shadow-2xl min-h-[calc(100vh-220px)]"
         >
           {/* Drag Handle Indicator */}
           <div className="flex justify-center pt-4 pb-2">
