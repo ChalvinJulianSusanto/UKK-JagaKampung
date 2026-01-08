@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
@@ -13,7 +13,6 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const sheetRef = useRef(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -23,15 +22,15 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Sheet position state
-  const [sheetPosition, setSheetPosition] = useState('bottom'); // 'bottom' or 'top'
+  // Sheet dragging state
+  const [translateY, setTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [currentTranslate, setCurrentTranslate] = useState(0);
+  const startYRef = useRef(0);
+  const startTranslateRef = useRef(0);
 
-  // Position values (in pixels from bottom of screen)
-  const bottomPosition = 0;  // Card at initial position
-  const topPosition = -200;  // Card moved up by 200px
+  // Position limits
+  const minTranslate = -200; // Max up
+  const maxTranslate = 0;    // Initial position
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,56 +86,55 @@ const Login = () => {
     });
   };
 
-  // Touch handlers for the handle bar
+  // Touch handlers for the entire card
   const handleTouchStart = (e) => {
+    // Don't trigger drag if touching input fields or buttons
+    const tagName = e.target.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'button' || tagName === 'a') {
+      return;
+    }
+
     setIsDragging(true);
-    setStartY(e.touches[0].clientY);
+    startYRef.current = e.touches[0].clientY;
+    startTranslateRef.current = translateY;
   };
 
   const handleTouchMove = (e) => {
     if (!isDragging) return;
 
     const currentY = e.touches[0].clientY;
-    const diff = startY - currentY;
+    const diff = currentY - startYRef.current;
 
-    // Calculate new translate value
-    const baseTranslate = sheetPosition === 'top' ? topPosition : bottomPosition;
-    let newTranslate = baseTranslate - diff;
+    let newTranslate = startTranslateRef.current + diff;
 
-    // Clamp the value
-    newTranslate = Math.max(topPosition, Math.min(bottomPosition, newTranslate));
+    // Clamp with elastic effect at bounds
+    if (newTranslate > maxTranslate) {
+      newTranslate = maxTranslate + (newTranslate - maxTranslate) * 0.2;
+    } else if (newTranslate < minTranslate) {
+      newTranslate = minTranslate + (newTranslate - minTranslate) * 0.2;
+    }
 
-    setCurrentTranslate(newTranslate);
+    setTranslateY(newTranslate);
   };
 
   const handleTouchEnd = () => {
+    if (!isDragging) return;
     setIsDragging(false);
 
-    // Determine final position based on current translate
-    const threshold = (topPosition + bottomPosition) / 2;
+    // Snap to nearest position
+    const midPoint = (minTranslate + maxTranslate) / 2;
 
-    if (currentTranslate < threshold) {
-      setSheetPosition('top');
-      setCurrentTranslate(topPosition);
+    if (translateY < midPoint) {
+      setTranslateY(minTranslate); // Snap to top
     } else {
-      setSheetPosition('bottom');
-      setCurrentTranslate(bottomPosition);
+      setTranslateY(maxTranslate); // Snap to bottom
     }
-  };
-
-  // Get current translateY value
-  const getTranslateY = () => {
-    if (isDragging) {
-      return currentTranslate;
-    }
-    return sheetPosition === 'top' ? topPosition : bottomPosition;
   };
 
   return (
     <div className="h-screen w-full overflow-hidden relative bg-gradient-to-b from-blue-600 to-blue-500">
       {/* Fixed Blue Background with Logo */}
-      <div className="absolute inset-0 flex flex-col items-center pt-16">
-        {/* Logo */}
+      <div className="absolute inset-0 flex flex-col items-center pt-16 pointer-events-none">
         <img
           src={logoPutih}
           alt="JagaKampung Logo"
@@ -147,32 +145,27 @@ const Login = () => {
         </p>
       </div>
 
-      {/* White Card (Bottom Sheet) */}
+      {/* White Card - Entire card is draggable */}
       <div
-        ref={sheetRef}
-        className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl overflow-hidden"
+        className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl select-none"
         style={{
           top: '38%',
-          height: 'calc(100vh - 38% + 200px)', // Extra height for when pulled up
-          transform: `translateY(${getTranslateY()}px)`,
-          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)'
+          minHeight: '80vh',
+          transform: `translateY(${translateY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
+          touchAction: 'none'
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* Drag Handle - Only this area responds to touch drag */}
-        <div
-          className="flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
+        {/* Drag Handle Indicator */}
+        <div className="flex justify-center pt-4 pb-3">
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
-        {/* Card Content - Scrollable */}
-        <div
-          className="px-6 pb-10 overflow-y-auto"
-          style={{ maxHeight: 'calc(100vh - 100px)' }}
-        >
+        {/* Card Content */}
+        <div className="px-6 pb-10">
           {/* Welcome Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -190,17 +183,15 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Masukkan Email anda"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3.5 border-2 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors ${errors.email ? 'border-red-400' : 'border-gray-200'
-                    }`}
-                />
-              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Masukkan Email anda"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full px-4 py-3.5 border-2 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors ${errors.email ? 'border-red-400' : 'border-gray-200'
+                  }`}
+              />
               {errors.email && (
                 <p className="text-red-500 text-xs mt-1">{errors.email}</p>
               )}
@@ -276,7 +267,7 @@ const Login = () => {
             <span className="text-blue-500 font-semibold">Sign in with Google</span>
           </button>
 
-          {/* Footer - Copyright */}
+          {/* Footer */}
           <div className="mt-10 pt-6 border-t border-gray-100">
             <p className="text-center text-xs text-gray-400">
               © 2025 JagaKampung. All rights reserved.
