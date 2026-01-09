@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 // Assets
 import logoPutih from '../assets/putih.png';
+import googleIcon from '../assets/google.png';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -116,28 +116,83 @@ const Login = () => {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setGoogleLoading(true);
-    try {
-      const result = await loginWithGoogle(credentialResponse.credential);
-      if (result.success) {
-        const userData = result.user;
-        if (!userData.rt || !userData.phone) {
-          navigate('/complete-profile', { replace: true });
-        } else {
-          navigate('/', { replace: true });
+  // Manual Google OAuth without One Tap
+  const handleGoogleLogin = () => {
+    const clientId = '77872697185-pufpqcvkfi4db4dvq2o9hvkgcvb78tjj.apps.googleusercontent.com';
+    const redirectUri = window.location.origin + '/auth/google/callback';
+    const scope = 'email profile';
+
+    // Google OAuth 2.0 authorization endpoint
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `response_type=token&` +
+      `scope=${encodeURIComponent(scope)}&` +
+      `state=google_login`;
+
+    // Open Google login in popup window
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      authUrl,
+      'Google Sign In',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=no`
+    );
+
+    if (!popup) {
+      toast.error('Popup diblokir. Izinkan popup untuk login dengan Google.');
+      return;
+    }
+
+    // Listen for message from popup
+    const handleMessage = async (event) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'google_auth_success') {
+        window.removeEventListener('message', handleMessage);
+        setGoogleLoading(true);
+
+        try {
+          // Get user info from Google
+          const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+              Authorization: `Bearer ${event.data.accessToken}`,
+            },
+          });
+
+          const userInfo = await response.json();
+
+          // Create a credential object for backend
+          const mockCredential = btoa(JSON.stringify({
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture,
+            sub: userInfo.sub,
+          }));
+
+          const result = await loginWithGoogle(mockCredential);
+
+          if (result.success) {
+            const userData = result.user;
+            if (!userData.rt || !userData.phone) {
+              navigate('/complete-profile', { replace: true });
+            } else {
+              navigate('/', { replace: true });
+            }
+          }
+        } catch (error) {
+          console.error('Google login error:', error);
+          toast.error('Google login gagal');
+        } finally {
+          setGoogleLoading(false);
         }
       }
-    } catch (error) {
-      console.error('Google login error:', error);
-      toast.error('Google login gagal');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+    };
 
-  const handleGoogleError = () => {
-    toast.error('Google login gagal. Silakan coba lagi.');
+    window.addEventListener('message', handleMessage);
   };
 
   // Aggressively disable Google One Tap when component mounts
@@ -425,25 +480,25 @@ const Login = () => {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          {/* Google Sign In - Popup Flow Only */}
-          <div className="w-full">
+          {/* Google Sign In - Custom Button (No One Tap!) */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {googleLoading ? (
-              <div className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-gray-200 rounded-xl bg-gray-50">
+              <>
                 <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
                 <span className="text-gray-500 font-medium">Memproses...</span>
-              </div>
+              </>
             ) : (
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                ux_mode="popup"
-                size="large"
-                width="380"
-                text="signin_with"
-                shape="rectangular"
-              />
+              <>
+                <img src={googleIcon} alt="Google" className="w-5 h-5" />
+                <span className="text-gray-700 font-medium">Sign in with Google</span>
+              </>
             )}
-          </div>
+          </button>
 
           <div className="mt-8 pt-5 border-t border-gray-100">
             <p className="text-center text-xs text-gray-400">© 2025 JagaKampung. All rights reserved.</p>
