@@ -143,6 +143,38 @@ const Login = () => {
     toast.error('Google login gagal. Silakan coba lagi.');
   };
 
+  // Aggressively disable Google One Tap when component mounts
+  useEffect(() => {
+    const disableGoogleOneTap = () => {
+      if (window.google?.accounts?.id) {
+        try {
+          // Cancel any active prompts
+          window.google.accounts.id.cancel();
+          // Disable auto-select
+          window.google.accounts.id.disableAutoSelect();
+        } catch (error) {
+          console.log('Error disabling Google One Tap:', error);
+        }
+      }
+    };
+
+    // Disable immediately
+    disableGoogleOneTap();
+
+    // Keep disabling every 500ms for the first 5 seconds
+    const interval = setInterval(disableGoogleOneTap, 500);
+
+    // Clear interval after 5 seconds
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
+
   // Touch handling with passive: false for immediate response
   useEffect(() => {
     const card = cardRef.current;
