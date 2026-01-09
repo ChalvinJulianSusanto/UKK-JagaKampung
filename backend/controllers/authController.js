@@ -314,14 +314,44 @@ exports.googleLogin = async (req, res) => {
       });
     }
 
-    // Verify Google token
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let googleId, email, name, picture;
 
-    const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture } = payload;
+    // Check if credential is base64 encoded (from useGoogleLogin) or JWT token (from GoogleLogin component)
+    try {
+      // Try to decode as base64 first (from useGoogleLogin implicit flow)
+      const decoded = Buffer.from(credential, 'base64').toString('utf-8');
+      const userInfo = JSON.parse(decoded);
+
+      if (userInfo.sub && userInfo.email) {
+        // This is from useGoogleLogin
+        googleId = userInfo.sub;
+        email = userInfo.email;
+        name = userInfo.name;
+        picture = userInfo.picture;
+      } else {
+        throw new Error('Invalid user info format');
+      }
+    } catch (decodeError) {
+      // If base64 decode fails, try verifying as JWT token
+      try {
+        const ticket = await googleClient.verifyIdToken({
+          idToken: credential,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        googleId = payload.sub;
+        email = payload.email;
+        name = payload.name;
+        picture = payload.picture;
+      } catch (verifyError) {
+        console.error('Google token verification failed:', verifyError);
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid Google credential',
+        });
+      }
+    }
 
     // Check if user exists with this Google ID
     let user = await User.findOne({ googleId });

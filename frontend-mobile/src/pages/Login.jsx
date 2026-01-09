@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -116,12 +117,56 @@ const Login = () => {
     }
   };
 
-  // Manual Google OAuth without One Tap - DISABLED for now
+  // Google Login with useGoogleLogin hook (popup flow, no One Tap)
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+      try {
+        // Get user info from Google using access token
+        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        });
+
+        const userInfo = await userInfoResponse.json();
+
+        // Create credential for backend (base64 encoded user info)
+        const credential = btoa(JSON.stringify({
+          email: userInfo.email,
+          name: userInfo.name,
+          picture: userInfo.picture,
+          sub: userInfo.sub,
+          email_verified: userInfo.email_verified,
+        }));
+
+        const result = await loginWithGoogle(credential);
+
+        if (result.success) {
+          const userData = result.user;
+          if (!userData.rt || !userData.phone) {
+            navigate('/complete-profile', { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error('Google login error:', error);
+        toast.error('Google login gagal. Silakan coba lagi.');
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Google login error:', error);
+      toast.error('Google login gagal. Silakan coba lagi.');
+    },
+    flow: 'implicit', // Use popup flow
+  });
+
+  // Handler for button click
   const handleGoogleLogin = () => {
-    toast('Google Login akan segera hadir! Gunakan email/password untuk sekarang.', {
-      icon: '🚀',
-      duration: 4000
-    });
+    googleLogin();
   };
 
   // Aggressively disable Google One Tap when component mounts
