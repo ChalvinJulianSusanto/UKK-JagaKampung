@@ -116,83 +116,12 @@ const Login = () => {
     }
   };
 
-  // Manual Google OAuth without One Tap
+  // Manual Google OAuth without One Tap - DISABLED for now
   const handleGoogleLogin = () => {
-    const clientId = '77872697185-pufpqcvkfi4db4dvq2o9hvkgcvb78tjj.apps.googleusercontent.com';
-    const redirectUri = window.location.origin + '/auth/google/callback';
-    const scope = 'email profile';
-
-    // Google OAuth 2.0 authorization endpoint
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `response_type=token&` +
-      `scope=${encodeURIComponent(scope)}&` +
-      `state=google_login`;
-
-    // Open Google login in popup window
-    const width = 500;
-    const height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const popup = window.open(
-      authUrl,
-      'Google Sign In',
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=no`
-    );
-
-    if (!popup) {
-      toast.error('Popup diblokir. Izinkan popup untuk login dengan Google.');
-      return;
-    }
-
-    // Listen for message from popup
-    const handleMessage = async (event) => {
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === 'google_auth_success') {
-        window.removeEventListener('message', handleMessage);
-        setGoogleLoading(true);
-
-        try {
-          // Get user info from Google
-          const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: {
-              Authorization: `Bearer ${event.data.accessToken}`,
-            },
-          });
-
-          const userInfo = await response.json();
-
-          // Create a credential object for backend
-          const mockCredential = btoa(JSON.stringify({
-            email: userInfo.email,
-            name: userInfo.name,
-            picture: userInfo.picture,
-            sub: userInfo.sub,
-          }));
-
-          const result = await loginWithGoogle(mockCredential);
-
-          if (result.success) {
-            const userData = result.user;
-            if (!userData.rt || !userData.phone) {
-              navigate('/complete-profile', { replace: true });
-            } else {
-              navigate('/', { replace: true });
-            }
-          }
-        } catch (error) {
-          console.error('Google login error:', error);
-          toast.error('Google login gagal');
-        } finally {
-          setGoogleLoading(false);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
+    toast('Google Login akan segera hadir! Gunakan email/password untuk sekarang.', {
+      icon: '🚀',
+      duration: 4000
+    });
   };
 
   // Aggressively disable Google One Tap when component mounts
