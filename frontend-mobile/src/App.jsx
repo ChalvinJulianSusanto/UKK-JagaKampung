@@ -20,6 +20,7 @@ import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import AttendanceCalendar from './pages/AttendanceCalendar';
+import CompleteProfile from './pages/CompleteProfile';
 
 // Public Route wrapper - redirect to home if already authenticated
 const PublicRoute = ({ children }) => {
@@ -103,6 +104,16 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="attendance-calendar" element={<AttendanceCalendar />} />
       </Route>
+
+      {/* Complete Profile Route - Protected but separate from main layout */}
+      <Route
+        path="/complete-profile"
+        element={
+          <ProtectedRoute>
+            <CompleteProfile />
+          </ProtectedRoute>
+        }
+      />
 
       {/* 404 - Redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />

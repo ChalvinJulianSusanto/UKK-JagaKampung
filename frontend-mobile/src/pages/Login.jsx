@@ -121,7 +121,15 @@ const Login = () => {
     try {
       const result = await loginWithGoogle(credentialResponse.credential);
       if (result.success) {
-        navigate('/', { replace: true });
+        // Check if user has completed profile (RT and phone)
+        const userData = result.user;
+        if (!userData.rt || !userData.phone) {
+          // Redirect to complete profile page
+          navigate('/complete-profile', { replace: true });
+        } else {
+          // Profile complete, go to home
+          navigate('/', { replace: true });
+        }
       }
     } catch (error) {
       console.error('Google login error:', error);
@@ -382,14 +390,14 @@ const Login = () => {
             <Link to="/register" className="text-blue-500 font-semibold">Daftar Sekarang</Link>
           </p>
 
-          <div className="flex items-center my-6">
+          <div className="flex items-center my-5">
             <div className="flex-1 h-px bg-gray-200" />
             <span className="px-4 text-sm text-gray-400">Atau gunakan akun</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
           {/* Google Sign In */}
-          <div className="flex justify-center">
+          <div className="w-full">
             {googleLoading ? (
               <div className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-gray-200 rounded-xl bg-gray-50">
                 <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
@@ -404,11 +412,12 @@ const Login = () => {
                 width="100%"
                 text="signin_with"
                 shape="rectangular"
+                use_fedcm_for_prompt={false}
               />
             )}
           </div>
 
-          <div className="mt-10 pt-6 border-t border-gray-100">
+          <div className="mt-8 pt-5 border-t border-gray-100">
             <p className="text-center text-xs text-gray-400">© 2025 JagaKampung. All rights reserved.</p>
           </div>
         </div>

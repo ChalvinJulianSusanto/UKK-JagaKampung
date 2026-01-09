@@ -158,6 +158,12 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
 
+    // Clear Google credentials by revoking access
+    // This will clear the "Login sebagai Chalvin" prompt
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.disableAutoSelect();
+    }
+
     // Clear state
     setUser(null);
     setIsAuthenticated(false);
