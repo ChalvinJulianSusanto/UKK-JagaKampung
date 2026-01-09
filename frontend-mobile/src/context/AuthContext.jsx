@@ -152,16 +152,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    const userData = user;
+
     // Clear storage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
 
-    // Clear Google credentials by revoking access
-    // This will clear the "Login sebagai Chalvin" prompt
+    // Clear Google credentials completely
     if (window.google?.accounts?.id) {
+      // Cancel any active prompts
+      window.google.accounts.id.cancel();
+
+      // Disable auto-select
       window.google.accounts.id.disableAutoSelect();
+
+      // Revoke credentials if user logged in with Google
+      if (userData?.authProvider === 'google' && userData?.email) {
+        try {
+          window.google.accounts.id.revoke(userData.email, () => {
+            console.log('Google credentials revoked');
+          });
+        } catch (error) {
+          console.log('Error revoking Google credentials:', error);
+        }
+      }
     }
 
     // Clear state
