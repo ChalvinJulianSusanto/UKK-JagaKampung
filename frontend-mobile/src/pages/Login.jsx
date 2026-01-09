@@ -121,13 +121,10 @@ const Login = () => {
     try {
       const result = await loginWithGoogle(credentialResponse.credential);
       if (result.success) {
-        // Check if user has completed profile (RT and phone)
         const userData = result.user;
         if (!userData.rt || !userData.phone) {
-          // Redirect to complete profile page
           navigate('/complete-profile', { replace: true });
         } else {
-          // Profile complete, go to home
           navigate('/', { replace: true });
         }
       }
@@ -428,7 +425,7 @@ const Login = () => {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          {/* Google Sign In */}
+          {/* Google Sign In - Popup Flow Only */}
           <div className="w-full">
             {googleLoading ? (
               <div className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-gray-200 rounded-xl bg-gray-50">
@@ -439,12 +436,11 @@ const Login = () => {
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
-                theme="outline"
+                ux_mode="popup"
                 size="large"
-                width="100%"
+                width="380"
                 text="signin_with"
                 shape="rectangular"
-                use_fedcm_for_prompt={false}
               />
             )}
           </div>
