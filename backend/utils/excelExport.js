@@ -1,5 +1,25 @@
 const ExcelJS = require('exceljs');
 
+// Helper function to get day name in Indonesian
+const getDayName = (date) => {
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  return days[new Date(date).getDay()];
+};
+
+// Helper function to format date with day name
+const formatDateWithDay = (date) => {
+  const dayName = getDayName(date);
+  const formattedDate = new Date(date).toLocaleDateString('id-ID');
+  return `${dayName}, ${formattedDate}`;
+};
+
+// Helper function to format timestamp with day name
+const formatTimestampWithDay = (date) => {
+  const dayName = getDayName(date);
+  const formattedDateTime = new Date(date).toLocaleString('id-ID');
+  return `${dayName}, ${formattedDateTime}`;
+};
+
 /**
  * Export attendance data to Excel
  * @param {Array} attendances - Array of attendance data
@@ -35,13 +55,13 @@ const exportAttendanceToExcel = async (attendances, rt = null) => {
   attendances.forEach((attendance, index) => {
     worksheet.addRow({
       no: index + 1,
-      date: new Date(attendance.date).toLocaleDateString('id-ID'),
+      date: formatDateWithDay(attendance.date),
       name: attendance.user?.name || 'N/A',
       rt: attendance.rt,
       status: attendance.status === 'hadir' ? 'Hadir' : 'Tidak Hadir',
       reason: attendance.reason || '-',
-      approved: attendance.approved ? 'Ya' : 'Belum',
-      timestamp: new Date(attendance.createdAt).toLocaleString('id-ID'),
+      approved: attendance.approved ? 'Disetujui' : 'Belum',
+      timestamp: formatTimestampWithDay(attendance.createdAt),
     });
   });
 

@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Info,
-  ChevronDown
+  ChevronDown,
+  Calendar
 } from 'lucide-react';
 import { dashboardAPI } from '../api/dashboard';
 import Button from '../components/common/Button';
@@ -93,21 +94,49 @@ const Reports = () => {
     const setLoading = isExcel ? setExportingExcel : setExportingPDF;
     const apiCall = isExcel ? dashboardAPI.exportToExcel : dashboardAPI.exportToPDF;
     const ext = isExcel ? 'xlsx' : 'pdf';
+    const mimeType = isExcel
+      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      : 'application/pdf';
 
     setLoading(true);
     try {
+      console.log(`Memulai export ${type}...`, filters); // Debug log
+
       const blob = await apiCall(filters);
-      const url = window.URL.createObjectURL(blob);
+
+      // Verifikasi blob
+      if (!blob || blob.size === 0) {
+        throw new Error('File export kosong');
+      }
+
+      console.log(`Blob received:`, blob.type, blob.size, 'bytes'); // Debug log
+
+      // Pastikan blob type sudah benar
+      const properBlob = new Blob([blob], { type: mimeType });
+
+      const url = window.URL.createObjectURL(properBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Rekap_Absensi${filters.rt ? `_RT${filters.rt}` : ''}_${filters.startDate}_sd_${filters.endDate}.${ext} `;
+
+      // Encode filename untuk karakter khusus Indonesia
+      const filename = `Rekap_Absensi${filters.rt ? `_RT${filters.rt}` : ''}_${filters.startDate}_sd_${filters.endDate}.${ext}`;
+      link.download = filename;
+
+      // Append, click, dan cleanup
       document.body.appendChild(link);
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+
+      // Cleanup dengan delay untuk memastikan download selesai
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
       toast.success(`Laporan ${isExcel ? 'Excel' : 'PDF'} berhasil diunduh!`);
+      console.log(`Export ${type} berhasil:`, filename); // Debug log
     } catch (error) {
-      toast.error('Gagal mengekspor laporan');
+      console.error(`Error export ${type}:`, error); // Debug log
+      toast.error(error.response?.data?.message || `Gagal mengekspor laporan ${type.toUpperCase()}`);
     } finally {
       setLoading(false);
     }

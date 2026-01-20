@@ -1,5 +1,25 @@
 const PDFDocument = require('pdfkit');
 
+// Helper function to get day name in Indonesian
+const getDayName = (date) => {
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  return days[new Date(date).getDay()];
+};
+
+// Helper function to format date with day name
+const formatDateWithDay = (date) => {
+  const dayName = getDayName(date);
+  const formattedDate = new Date(date).toLocaleDateString('id-ID');
+  return `${dayName}, ${formattedDate}`;
+};
+
+// Helper function to format timestamp with day name
+const formatTimestampWithDay = (date) => {
+  const dayName = getDayName(date);
+  const formattedDateTime = new Date(date).toLocaleString('id-ID');
+  return `${dayName}, ${formattedDateTime}`;
+};
+
 /**
  * Export attendance data to PDF
  * @param {Array} attendances - Array of attendance data
@@ -51,16 +71,16 @@ const exportAttendanceToPDF = (attendances, rt = null) => {
       const itemHeight = 25;
       const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
 
-      // Column widths
+      // Column widths - Optimized untuk timestamp lebih panjang
       const colWidths = {
-        no: 30,
-        date: 80,
-        name: 120,
-        rt: 40,
-        status: 80,
-        reason: 150,
-        approved: 60,
-        timestamp: 100,
+        no: 25,
+        date: 75,
+        name: 110,
+        rt: 35,
+        status: 70,
+        reason: 130,
+        approved: 55,
+        timestamp: 140, // Increased untuk accommodate "Senin, 13/1/2026, 14.30.47"
       };
 
       // Draw header background
@@ -147,7 +167,7 @@ const exportAttendanceToPDF = (attendances, rt = null) => {
         const rowData = [
           { text: (index + 1).toString(), width: colWidths.no },
           {
-            text: new Date(attendance.date).toLocaleDateString('id-ID'),
+            text: formatDateWithDay(attendance.date),
             width: colWidths.date,
           },
           { text: attendance.user?.name || 'N/A', width: colWidths.name },
@@ -161,16 +181,20 @@ const exportAttendanceToPDF = (attendances, rt = null) => {
             width: colWidths.reason,
           },
           {
-            text: attendance.approved ? 'Ya' : 'Belum',
+            text: attendance.approved ? 'Disetujui' : 'Belum',
             width: colWidths.approved,
           },
           {
-            text: new Date(attendance.createdAt).toLocaleString('id-ID'),
+            text: formatTimestampWithDay(attendance.createdAt),
             width: colWidths.timestamp,
           },
         ];
 
-        rowData.forEach((data) => {
+        rowData.forEach((data, colIndex) => {
+          // Use smaller font for timestamp column to fit in one line
+          const fontSize = colIndex === 7 ? 7 : 8; // Column 7 is timestamp
+          doc.fontSize(fontSize);
+
           doc.text(data.text, currentX, currentY + 8, {
             width: data.width - 10,
             align: 'left',

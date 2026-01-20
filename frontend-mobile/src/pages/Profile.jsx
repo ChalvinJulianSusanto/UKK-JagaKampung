@@ -256,6 +256,10 @@ const Profile = () => {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [tempSelectedLanguage, setTempSelectedLanguage] = useState(currentLanguage);
 
+  // RT Dropdown state (similar to Schedule.jsx)
+  const [isRTOpen, setIsRTOpen] = useState(false);
+  const rtRef = useRef(null);
+
   // State Photo Preview
   const [photoPreview, setPhotoPreview] = useState(user?.photo || null);
   const [photoFile, setPhotoFile] = useState(null);
@@ -505,6 +509,18 @@ const Profile = () => {
     setTempSelectedLanguage(currentLanguage);
     setShowLanguageModal(true);
   };
+
+  // Close RT dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (rtRef.current && !rtRef.current.contains(event.target)) {
+        setIsRTOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Confirm Language Change
   const handleConfirmLanguageChange = () => {
@@ -775,24 +791,59 @@ const Profile = () => {
                       {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
                     </div>
 
-                    {/* RT Select */}
-                    <div className="relative">
+                    {/* RT Dropdown - Custom Design */}
+                    <div className="relative" ref={rtRef}>
                       <label className="text-xs text-slate-400 mb-1 block">{t('profile.rt')}</label>
-                      <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 focus-within:border-primary/30 focus-within:bg-white transition-all">
-                        <MapPin className="w-4 h-4 text-slate-400" />
-                        <select
-                          name="rt"
-                          value={formData.rt}
-                          onChange={handleChange}
-                          className="flex-1 bg-transparent text-sm text-slate-700 outline-none appearance-none cursor-pointer"
-                        >
-                          <option value="">{t('profile.selectRT')}</option>
-                          {rtOptions.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
-                        <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsRTOpen(!isRTOpen)}
+                        className="w-full flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 focus:outline-none focus:border-primary/30 hover:bg-white transition-all text-left"
+                      >
+                        <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <span className="flex-1 text-sm text-slate-700 font-medium">
+                          {formData.rt ? `RT ${formData.rt}` : t('profile.selectRT')}
+                        </span>
+                        <ChevronRight
+                          className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${isRTOpen ? 'rotate-90' : 'rotate-90'}`}
+                          style={{ transform: isRTOpen ? 'rotate(270deg)' : 'rotate(90deg)' }}
+                        />
+                      </button>
+
+                      {/* Custom Dropdown Menu */}
+                      <AnimatePresence>
+                        {isRTOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50"
+                          >
+                            <div className="overflow-y-auto py-1" style={{ maxHeight: '200px' }}>
+                              {rtOptions.map((option) => (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({ ...prev, rt: option.value }));
+                                    setIsRTOpen(false);
+                                    if (errors.rt) {
+                                      setErrors(prev => ({ ...prev, rt: '' }));
+                                    }
+                                  }}
+                                  className={`w-full px-4 py-2.5 text-sm text-left hover:bg-slate-50 transition-colors ${formData.rt === option.value
+                                    ? 'bg-primary/10 text-primary font-semibold'
+                                    : 'text-slate-700'
+                                    }`}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       {errors.rt && <p className="text-xs text-red-500 mt-1">{errors.rt}</p>}
                     </div>
                   </div>
