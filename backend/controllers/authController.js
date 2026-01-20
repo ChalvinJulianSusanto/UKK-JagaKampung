@@ -362,14 +362,18 @@ exports.googleLogin = async (req, res) => {
 
       if (user) {
         // Link Google account to existing user
+        console.log('Linking Google account to existing user:', email);
         user.googleId = googleId;
         user.authProvider = 'google';
-        if (!user.photo && picture) {
+        // Always update photo if Google provides one
+        if (picture) {
+          console.log('Updating user photo from Google:', picture);
           user.photo = picture;
         }
         await user.save();
       } else {
         // Create new user with Google account
+        console.log('Creating new user with Google account:', email, 'Photo:', picture);
         user = await User.create({
           name,
           email,
@@ -378,6 +382,13 @@ exports.googleLogin = async (req, res) => {
           photo: picture || null,
           // RT will be set later by user
         });
+      }
+    } else {
+      // User already exists with Google ID - update photo on every login
+      if (picture && user.photo !== picture) {
+        console.log('Updating existing Google user photo:', email, 'Old:', user.photo, 'New:', picture);
+        user.photo = picture;
+        await user.save();
       }
     }
 

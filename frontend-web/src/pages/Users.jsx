@@ -78,7 +78,16 @@ const Users = () => {
       const params = {};
       if (filterRT) params.rt = filterRT;
       const response = await usersAPI.getAll(params);
-      if (response.success) setUsers(response.data);
+      if (response.success) {
+        console.log('Users fetched:', response.data.length, 'users');
+        // Log users with photos for debugging
+        response.data.forEach(user => {
+          if (user.photo) {
+            console.log(`User ${user.name} has photo:`, user.photo);
+          }
+        });
+        setUsers(response.data);
+      }
     } catch (error) {
       toast.error('Gagal memuat data pengguna');
     } finally {
@@ -305,6 +314,14 @@ const Users = () => {
                                 src={user.photo.startsWith('http') ? user.photo : `http://localhost:5000${user.photo}`}
                                 alt={user.name}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  console.log('Photo load failed for user:', user.name, user.photo);
+                                  e.target.style.display = 'none';
+                                  const fallback = document.createElement('div');
+                                  fallback.className = 'w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm';
+                                  fallback.textContent = user.name?.charAt(0).toUpperCase();
+                                  e.target.parentElement.appendChild(fallback);
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
@@ -331,8 +348,8 @@ const Users = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${user.status === 'active'
-                            ? 'bg-green-50 text-green-700 border-green-200'
-                            : 'bg-red-50 text-red-700 border-red-200'
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : 'bg-red-50 text-red-700 border-red-200'
                           }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                           {user.status === 'active' ? 'Aktif' : 'Banned'}
@@ -345,8 +362,8 @@ const Users = () => {
                           <button
                             onClick={() => handleBanUser(user._id, user.status)}
                             className={`p-2 rounded-lg transition-colors ${user.status === 'active'
-                                ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' // Active: Hover Merah (Ban)
-                                : 'text-red-500 bg-red-50 hover:bg-green-50 hover:text-green-600' // Banned: Hover Hijau (Unban)
+                              ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' // Active: Hover Merah (Ban)
+                              : 'text-red-500 bg-red-50 hover:bg-green-50 hover:text-green-600' // Banned: Hover Hijau (Unban)
                               }`}
                             title={user.status === 'active' ? 'Ban User' : 'Unban User'}
                           >
@@ -386,6 +403,14 @@ const Users = () => {
                             src={user.photo.startsWith('http') ? user.photo : `http://localhost:5000${user.photo}`}
                             alt={user.name}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.log('Photo load failed for user:', user.name, user.photo);
+                              e.target.style.display = 'none';
+                              const fallback = document.createElement('div');
+                              fallback.className = 'w-full h-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm';
+                              fallback.textContent = user.name?.charAt(0).toUpperCase();
+                              e.target.parentElement.appendChild(fallback);
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm">

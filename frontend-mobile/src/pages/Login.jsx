@@ -469,7 +469,7 @@ const Login = () => {
             ) : (
               <>
                 <img src={googleIcon} alt="Google" className="w-5 h-5" />
-                <span className="text-gray-700 font-medium">Sign in with Google</span>
+                <span className="text-gray-700 font-medium">Login dengan Google</span>
               </>
             )}
           </button>
