@@ -7,6 +7,14 @@ const { OAuth2Client } = require('google-auth-library');
 // Initialize Google OAuth client
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// Helper function to check if a photo URL is from Google
+const isGooglePhoto = (photoUrl) => {
+  if (!photoUrl) return false;
+  return photoUrl.includes('googleusercontent.com') ||
+    photoUrl.includes('google.com') ||
+    photoUrl.includes('ggpht.com');
+};
+
 // @desc    Register new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -365,10 +373,13 @@ exports.googleLogin = async (req, res) => {
         console.log('Linking Google account to existing user:', email);
         user.googleId = googleId;
         user.authProvider = 'google';
-        // Always update photo if Google provides one
-        if (picture) {
+        // Only update photo if user has no photo OR current photo is from Google
+        // This preserves custom uploaded photos
+        if (picture && (!user.photo || isGooglePhoto(user.photo))) {
           console.log('Updating user photo from Google:', picture);
           user.photo = picture;
+        } else if (user.photo) {
+          console.log('Preserving existing custom photo:', user.photo);
         }
         await user.save();
       } else {
@@ -384,11 +395,17 @@ exports.googleLogin = async (req, res) => {
         });
       }
     } else {
-      // User already exists with Google ID - update photo on every login
-      if (picture && user.photo !== picture) {
-        console.log('Updating existing Google user photo:', email, 'Old:', user.photo, 'New:', picture);
-        user.photo = picture;
-        await user.save();
+      // User already exists with Google ID
+      // Only update photo if user has no photo OR current photo is from Google
+      // This preserves custom uploaded photos
+      if (picture && (!user.photo || isGooglePhoto(user.photo))) {
+        if (user.photo !== picture) {
+          console.log('Updating existing Google user photo:', email, 'Old:', user.photo, 'New:', picture);
+          user.photo = picture;
+          await user.save();
+        }
+      } else if (user.photo) {
+        console.log('Preserving existing custom photo for user:', email);
       }
     }
 
