@@ -17,18 +17,14 @@ const Login = () => {
 
   // Refs
   const cardRef = useRef(null);
-  const bgRef = useRef(null);
+  const bgRef = useRef(null); // Ref baru untuk background
   const lastTouchY = useRef(0);
   const currentTranslate = useRef(0);
   const velocity = useRef(0);
   const lastTime = useRef(0);
 
-  // State for dynamic card position
-  const [cardTopPosition, setCardTopPosition] = useState('38%');
-  const [cardMaxHeight, setCardMaxHeight] = useState('75vh');
-
-  // State scroll limits
-  const [limits, setLimits] = useState({ min: 0, max: 0 });
+  // State untuk menyimpan batas scroll dinamis
+  const [limits, setLimits] = useState({ min: -200, max: 0 });
 
   const [formData, setFormData] = useState({
     email: '',
@@ -38,56 +34,24 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-
-  // --- RESPONSIVE POSITIONING & SCROLL LIMITS ---
+  // Hitung batas scroll berdasarkan ukuran layar saat ini
   useEffect(() => {
     const calculateLimits = () => {
       const windowHeight = window.innerHeight;
+      
+      // Posisi awal kartu adalah 45% dari atas (0.45)
+      const startPosition = windowHeight * 0.45; 
+      
+      // Kita ingin menyisakan ruang di atas (Header) sekitar 120px untuk Logo
+      const safeTopMargin = 120; 
 
-      // PERBAIKAN AGRESIF: Card mulai sangat rendah di layar kecil/sedang
-      // untuk memastikan semua konten termasuk tombol Google terlihat
-      let startPercentage;
-      let stopPercentage;
-      let maxCardHeight;
-
-      if (windowHeight < 650) {
-        // Layar sangat kecil (iPhone SE, dll)
-        startPercentage = 0.68; // Mulai SANGAT rendah
-        stopPercentage = 0.40;
-        maxCardHeight = '58vh'; // Height sangat kecil
-      } else if (windowHeight < 750) {
-        // Layar kecil (iPhone 12 Mini: 780px, dll)
-        startPercentage = 0.65; // Mulai sangat rendah  
-        stopPercentage = 0.38;
-        maxCardHeight = '60vh';
-      } else if (windowHeight < 850) {
-        // Layar sedang-kecil
-        startPercentage = 0.58;
-        stopPercentage = 0.32;
-        maxCardHeight = '65vh';
-      } else if (windowHeight < 950) {
-        // Layar sedang
-        startPercentage = 0.50;
-        stopPercentage = 0.28;
-        maxCardHeight = '70vh';
-      } else {
-        // Layar besar (>= 950px)
-        startPercentage = 0.42;
-        stopPercentage = 0.22;
-        maxCardHeight = '80vh';
-      }
-
-      const startPosition = windowHeight * startPercentage;
-      const targetStopPosition = windowHeight * stopPercentage;
-      const maxUpwardDistance = targetStopPosition - startPosition;
-
-      // Update posisi dan tinggi kartu secara dinamis
-      setCardTopPosition(`${startPercentage * 100}%`);
-      setCardMaxHeight(maxCardHeight);
-
+      // Hitung seberapa jauh kartu boleh naik (minY harus negatif)
+      // Jarak dari posisi awal ke margin atas
+      const maxUpwardDistance = safeTopMargin - startPosition;
+      
       setLimits({
-        min: maxUpwardDistance,
-        max: 0
+        min: maxUpwardDistance, // Contoh: -300px
+        max: 0 // Posisi default
       });
     };
 
@@ -96,26 +60,32 @@ const Login = () => {
     return () => window.removeEventListener('resize', calculateLimits);
   }, []);
 
-  // Parallax Effect
+  // Fungsi untuk menggerakkan Kartu DAN Background (Parallax Effect)
   const setTransform = (y) => {
+    // 1. Gerakkan Kartu
     if (cardRef.current) {
       cardRef.current.style.transform = `translateY(${y}px)`;
     }
-    // Background bergerak lebih lambat (0.15) agar tetap terlihat "stay" tapi dinamis
+    
+    // 2. Gerakkan Background (Lebih lambat, rasio 0.2)
+    // Ini membuat background "naik pelan" saat kartu ditarik, tanpa merubah ukuran
     if (bgRef.current) {
-      bgRef.current.style.transform = `translateY(${y * 0.15}px)`;
+      bgRef.current.style.transform = `translateY(${y * 0.2}px)`;
     }
   };
 
+  // Animate to position with spring-like effect
   const animateTo = (target) => {
     const start = currentTranslate.current;
     const distance = target - start;
-    const duration = 300;
+    const duration = 300; // Sedikit diperlambat agar smooth
     const startTime = performance.now();
 
     const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
+
+      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = start + distance * eased;
 
@@ -129,13 +99,16 @@ const Login = () => {
         setTransform(target);
       }
     };
+
     requestAnimationFrame(animate);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const validate = () => {
@@ -192,13 +165,14 @@ const Login = () => {
         setGoogleLoading(false);
       }
     },
-    onError: () => toast.error('Google login gagal.'),
+    onError: (error) => toast.error('Google login gagal.'),
     flow: 'implicit',
   });
 
   const handleGoogleLogin = () => googleLogin();
 
   useEffect(() => {
+    // Disable One Tap logic here (same as before)
     const disableGoogleOneTap = () => {
       if (window.google?.accounts?.id) {
         try {
@@ -213,7 +187,7 @@ const Login = () => {
     return () => { clearInterval(interval); clearTimeout(timeout); };
   }, []);
 
-  // --- TOUCH & MOUSE HANDLERS ---
+  // --- TOUCH & MOUSE HANDLERS (UPDATED LIMITS) ---
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
@@ -223,30 +197,38 @@ const Login = () => {
     const onTouchStart = (e) => {
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'button' || tag === 'a') return;
+
       isDragging = true;
       lastTouchY.current = e.touches[0].clientY;
       lastTime.current = performance.now();
       velocity.current = 0;
+      
       card.style.transition = 'none';
-      if (bgRef.current) bgRef.current.style.transition = 'none';
+      if(bgRef.current) bgRef.current.style.transition = 'none'; // Matikan transisi background saat drag
     };
 
     const onTouchMove = (e) => {
       if (!isDragging) return;
+
       const touchY = e.touches[0].clientY;
       const now = performance.now();
       const deltaY = touchY - lastTouchY.current;
       const deltaTime = now - lastTime.current;
+
       if (deltaTime > 0) velocity.current = deltaY / deltaTime;
 
       let newY = currentTranslate.current + deltaY;
 
-      // Rubber band effect
-      if (newY > limits.max) newY = limits.max + (newY - limits.max) * 0.3;
-      else if (newY < limits.min) newY = limits.min + (newY - limits.min) * 0.3;
+      // Rubber band effect pada batas limits.min dan limits.max
+      if (newY > limits.max) {
+        newY = limits.max + (newY - limits.max) * 0.3;
+      } else if (newY < limits.min) {
+        newY = limits.min + (newY - limits.min) * 0.3;
+      }
 
       currentTranslate.current = newY;
-      setTransform(newY);
+      setTransform(newY); // Menggerakkan Card & Background
+
       lastTouchY.current = touchY;
       lastTime.current = now;
       e.preventDefault();
@@ -255,18 +237,24 @@ const Login = () => {
     const onTouchEnd = () => {
       if (!isDragging) return;
       isDragging = false;
+
       const vel = velocity.current;
       let target;
-      if (Math.abs(vel) > 0.5) target = vel < 0 ? limits.min : limits.max;
-      else {
+
+      // Logic snap point yang lebih pintar
+      if (Math.abs(vel) > 0.5) {
+        target = vel < 0 ? limits.min : limits.max;
+      } else {
         const mid = (limits.min + limits.max) / 2;
         target = currentTranslate.current < mid ? limits.min : limits.max;
       }
+
+      // Pastikan target tidak melampaui batas
       target = Math.max(limits.min, Math.min(limits.max, target));
       animateTo(target);
     };
 
-    // Mouse handlers (duplicate logic omitted for brevity, keeping existing flow)
+    // Desktop Mouse Events (Sama logikanya dengan Touch)
     let isMouseDragging = false;
     const onMouseDown = (e) => {
       const tag = e.target.tagName.toLowerCase();
@@ -276,7 +264,7 @@ const Login = () => {
       lastTime.current = performance.now();
       velocity.current = 0;
       card.style.transition = 'none';
-      if (bgRef.current) bgRef.current.style.transition = 'none';
+      if(bgRef.current) bgRef.current.style.transition = 'none';
       e.preventDefault();
     };
 
@@ -286,9 +274,12 @@ const Login = () => {
       const deltaY = e.clientY - lastTouchY.current;
       const deltaTime = now - lastTime.current;
       if (deltaTime > 0) velocity.current = deltaY / deltaTime;
+      
       let newY = currentTranslate.current + deltaY;
+      
       if (newY > limits.max) newY = limits.max + (newY - limits.max) * 0.3;
       else if (newY < limits.min) newY = limits.min + (newY - limits.min) * 0.3;
+
       currentTranslate.current = newY;
       setTransform(newY);
       lastTouchY.current = e.clientY;
@@ -324,20 +315,21 @@ const Login = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
     };
-  }, [limits]);
+  }, [limits]); // Re-run effect jika limits berubah (resize window)
 
   return (
     <div className="h-screen w-full overflow-hidden relative bg-[#0f3a85]">
-      {/* Background Layer */}
-      <div
+      {/* Background Layer - Terpisah agar bisa diparallax */}
+      <div 
         ref={bgRef}
         className="absolute top-0 left-0 w-full h-full"
         style={{
           backgroundImage: `url(${bgLogin})`,
-          backgroundSize: '100% auto',
+          backgroundSize: '100% auto', // Lebar full, tinggi menyesuaikan
           backgroundPosition: 'top center',
           backgroundRepeat: 'no-repeat',
-          willChange: 'transform',
+          willChange: 'transform', // Optimasi performa animasi
+          // Transform origin top center agar anchor tetap di atas
           transformOrigin: 'top center'
         }}
       />
@@ -347,45 +339,44 @@ const Login = () => {
         ref={cardRef}
         className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl select-none cursor-grab active:cursor-grabbing"
         style={{
-          top: cardTopPosition,
-          height: 'auto',
-          maxHeight: cardMaxHeight,
+          // Posisi Awal: 45% dari atas (menutupi jalanan, menyisakan langit)
+          top: '45%', 
+          minHeight: '85vh', // Cukup panjang untuk scrolling
           willChange: 'transform',
           touchAction: 'none',
-          paddingBottom: '40px',
-          overflowY: 'auto'
+          paddingBottom: '120px'
         }}
       >
-        {/* Handle */}
+        {/* Handle Bar */}
         <div className="flex justify-center pt-4 pb-3">
-          <div className="w-12 h-1.5" />
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
-        {/* Content - Spacing optimized for small screens */}
-        <div className="px-6 pb-3">
-          <div className="mb-4">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1.5">Selamat Datang Di JagaKampung!</h1>
+        {/* Content */}
+        <div className="px-6 pb-10">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Selamat Datang Di JagaKampung!</h1>
             <p className="text-gray-500 text-sm leading-relaxed">
               Login atau Register sekarang! untuk menikmati semua fitur yang tersedia.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
                 name="email"
                 placeholder="Masukkan Email anda"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border-2 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
+                className={`w-full px-4 py-3.5 border-2 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
               />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -393,7 +384,7 @@ const Login = () => {
                   placeholder="Masukkan Password anda"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 pr-12 border-2 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
+                  className={`w-full px-4 py-3.5 pr-12 border-2 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
                 />
                 <button
                   type="button"
@@ -409,7 +400,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-4 rounded-xl shadow-lg shadow-blue-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -420,14 +411,14 @@ const Login = () => {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-600 mt-3">
+          <p className="text-center text-sm text-gray-600 mt-6">
             Belum punya akun?{' '}
             <Link to="/register" className="text-blue-500 font-semibold">Daftar Sekarang</Link>
           </p>
 
-          <div className="flex items-center my-3">
+          <div className="flex items-center my-5">
             <div className="flex-1 h-px bg-gray-200" />
-            <span className="px-3 text-xs text-gray-400">Atau gunakan akun</span>
+            <span className="px-4 text-sm text-gray-400">Atau gunakan akun</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
@@ -435,7 +426,7 @@ const Login = () => {
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-3 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {googleLoading ? (
               <>
@@ -450,11 +441,8 @@ const Login = () => {
             )}
           </button>
 
-          {/* --- PERBAIKAN 2: FOOTER COPYRIGHT COMPACT --- */}
-          {/* Mengurangi margin-top dari mt-8 menjadi mt-5 */}
-          {/* Mengurangi padding-top dari pt-5 menjadi pt-3 */}
-          <div className="mt-3 pt-2 border-t border-gray-100">
-            <p className="text-center text-xs text-gray-400">© 2026 JagaKampung. All rights reserved.</p>
+          <div className="mt-8 pt-5 border-t border-gray-100">
+            <p className="text-center text-xs text-gray-400">© 2025 JagaKampung. All rights reserved.</p>
           </div>
         </div>
       </div>
