@@ -23,6 +23,9 @@ const Login = () => {
   const velocity = useRef(0);
   const lastTime = useRef(0);
 
+  // State for dynamic card position
+  const [cardTopPosition, setCardTopPosition] = useState('38%');
+
   // State scroll limits
   const [limits, setLimits] = useState({ min: 0, max: 0 });
 
@@ -34,20 +37,42 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // --- PERBAIKAN 1: KALKULASI LIMIT SCROLL ---
+
+  // --- RESPONSIVE POSITIONING & SCROLL LIMITS ---
   useEffect(() => {
     const calculateLimits = () => {
       const windowHeight = window.innerHeight;
 
-      // Posisi awal kartu: 38% dari atas (lebih tinggi agar background terlihat lebih banyak)
-      const startPosition = windowHeight * 0.38;
+      // Adaptif untuk layar kecil vs besar
+      // Pada layar kecil (< 700px), kartu dimulai lebih rendah agar tidak terpotong
+      // Pada layar besar, kartu bisa lebih tinggi untuk menampilkan background
+      let startPercentage;
+      let stopPercentage;
 
-      // Target berhenti: 20% dari atas (Meninggalkan 20% area kosong untuk Logo/Langit)
-      // Semakin besar angka 0.20, semakin rendah kartu berhenti (semakin banyak background terlihat)
-      const targetStopPosition = windowHeight * 0.22;
+      if (windowHeight < 600) {
+        // Layar sangat kecil (misal iPhone SE)
+        startPercentage = 0.50; // Mulai lebih rendah
+        stopPercentage = 0.30;  // Berhenti lebih rendah
+      } else if (windowHeight < 700) {
+        // Layar kecil-sedang
+        startPercentage = 0.45;
+        stopPercentage = 0.25;
+      } else if (windowHeight < 800) {
+        // Layar sedang
+        startPercentage = 0.40;
+        stopPercentage = 0.22;
+      } else {
+        // Layar besar
+        startPercentage = 0.38;
+        stopPercentage = 0.20;
+      }
 
-      // Hitung jarak maksimal kartu boleh naik (hasil negatif)
+      const startPosition = windowHeight * startPercentage;
+      const targetStopPosition = windowHeight * stopPercentage;
       const maxUpwardDistance = targetStopPosition - startPosition;
+
+      // Update posisi kartu secara dinamis
+      setCardTopPosition(`${startPercentage * 100}%`);
 
       setLimits({
         min: maxUpwardDistance,
@@ -311,12 +336,13 @@ const Login = () => {
         ref={cardRef}
         className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl select-none cursor-grab active:cursor-grabbing"
         style={{
-          top: '38%',
-          minHeight: '85vh',
+          top: cardTopPosition,
+          height: 'auto',
+          maxHeight: '85vh',
           willChange: 'transform',
           touchAction: 'none',
-          // Padding bottom dikurangi dari 120px ke 60px karena footer sudah dirapikan
-          paddingBottom: '60px'
+          paddingBottom: '60px',
+          overflowY: 'auto'
         }}
       >
         {/* Handle */}
