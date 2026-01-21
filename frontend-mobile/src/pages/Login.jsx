@@ -362,9 +362,9 @@ const Login = () => {
         {/* Content - Spacing optimized for small screens */}
         <div className="px-6 pb-3">
           <div className="mb-4">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1.5">Selamat Datang Di JagaKampung!</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-1.5">Selamat Datang Di RW 01!</h1>
             <p className="text-gray-500 text-sm leading-relaxed">
-              Login atau Register sekarang! untuk menikmati semua fitur yang tersedia.
+              Login atau Register sekarang! untuk melakukan absensi ronda di RW 01.
             </p>
           </div>
 
@@ -450,7 +450,7 @@ const Login = () => {
           </button>
 
           <div className="mt-4 pt-3 border-t border-gray-100 pb-4">
-
+            <p className="text-center text-xs text-gray-400">© 2026 JagaKampung. All rights reserved.</p>
           </div>
         </div>
       </div>
