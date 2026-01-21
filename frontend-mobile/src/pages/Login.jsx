@@ -51,27 +51,22 @@ const Login = () => {
       let maxCardHeight;
 
       if (windowHeight < 650) {
-        // Layar sangat kecil (iPhone SE ~667px)
-        startPercentage = 0.32; // Mulai lebih tinggi
+        startPercentage = 0.32;
         stopPercentage = 0.15;
         maxCardHeight = '72vh';
       } else if (windowHeight < 780) {
-        // Layar kecil (iPhone 12 Mini ~780px)
         startPercentage = 0.35;
         stopPercentage = 0.18;
         maxCardHeight = '70vh';
       } else if (windowHeight < 850) {
-        // Layar sedang-kecil
         startPercentage = 0.38;
         stopPercentage = 0.20;
         maxCardHeight = '68vh';
       } else if (windowHeight < 950) {
-        // Layar sedang
         startPercentage = 0.40;
         stopPercentage = 0.20;
         maxCardHeight = '70vh';
       } else {
-        // Layar besar (>= 950px)
         startPercentage = 0.42;
         stopPercentage = 0.20;
         maxCardHeight = '75vh';
@@ -81,7 +76,6 @@ const Login = () => {
       const targetStopPosition = windowHeight * stopPercentage;
       const maxUpwardDistance = targetStopPosition - startPosition;
 
-      // Update posisi dan tinggi kartu secara dinamis
       setCardTopPosition(`${startPercentage * 100}%`);
       setCardMaxHeight(maxCardHeight);
 
@@ -101,7 +95,6 @@ const Login = () => {
     if (cardRef.current) {
       cardRef.current.style.transform = `translateY(${y}px)`;
     }
-    // Background bergerak lebih lambat (0.15) agar tetap terlihat "stay" tapi dinamis
     if (bgRef.current) {
       bgRef.current.style.transform = `translateY(${y * 0.15}px)`;
     }
@@ -266,7 +259,7 @@ const Login = () => {
       animateTo(target);
     };
 
-    // Mouse handlers (duplicate logic omitted for brevity, keeping existing flow)
+    // Mouse handlers
     let isMouseDragging = false;
     const onMouseDown = (e) => {
       const tag = e.target.tagName.toLowerCase();
@@ -345,15 +338,20 @@ const Login = () => {
       {/* White Card */}
       <div
         ref={cardRef}
-        className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl select-none cursor-grab active:cursor-grabbing"
+        className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl select-none cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
         style={{
           top: cardTopPosition,
-          height: 'auto',
-          maxHeight: cardMaxHeight,
+          // --- PERBAIKAN DI SINI ---
+          // Kita tambahkan + 50vh (setengah tinggi layar) sebagai buffer tambahan
+          // agar saat ditarik ke atas, card tidak habis (tidak kepotong).
+          minHeight: `calc(100vh - ${cardTopPosition} + 50vh)`, 
+          paddingBottom: '50px', // Opsional: tambah padding bawah
+          // ------------------------
           willChange: 'transform',
           touchAction: 'none',
-          paddingBottom: '40px',
-          overflowY: 'auto'
+          overflowY: 'hidden',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
         }}
       >
         {/* Handle */}
@@ -447,13 +445,11 @@ const Login = () => {
                 <img src={googleIcon} alt="Google" className="w-5 h-5" />
                 <span className="text-gray-700 font-medium">Login dengan Google</span>
               </>
-            )}
+            )
+            }
           </button>
 
-          {/* --- PERBAIKAN 2: FOOTER COPYRIGHT COMPACT --- */}
-          {/* Mengurangi margin-top dari mt-8 menjadi mt-5 */}
-          {/* Mengurangi padding-top dari pt-5 menjadi pt-3 */}
-          <div className="mt-3 pt-2 border-t border-gray-100">
+          <div className="mt-4 pt-3 border-t border-gray-100 pb-4">
             <p className="text-center text-xs text-gray-400">© 2026 JagaKampung. All rights reserved.</p>
           </div>
         </div>
