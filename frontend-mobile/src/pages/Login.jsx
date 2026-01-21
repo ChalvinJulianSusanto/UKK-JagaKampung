@@ -362,7 +362,7 @@ const Login = () => {
         {/* Content - Spacing optimized for small screens */}
         <div className="px-6 pb-3">
           <div className="mb-4">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-1.5">Selamat Datang Di RW 01!</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-1.5">Selamat Datang di RW 01!</h1>
             <p className="text-gray-500 text-sm leading-relaxed">
               Login atau Register sekarang! untuk melakukan absensi ronda di RW 01.
             </p>
