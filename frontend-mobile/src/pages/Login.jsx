@@ -450,7 +450,7 @@ const Login = () => {
           </button>
 
           <div className="mt-4 pt-3 border-t border-gray-100 pb-4">
-            <p className="text-center text-xs text-gray-400">© 2026 JagaKampung. All rights reserved.</p>
+
           </div>
         </div>
       </div>
