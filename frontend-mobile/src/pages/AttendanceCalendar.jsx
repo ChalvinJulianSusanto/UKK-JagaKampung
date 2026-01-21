@@ -181,7 +181,7 @@ const AttendanceCalendar = () => {
                             </div>
                             <div>
                                 <p className="text-xl font-bold text-gray-800">{stats.attendedDays} hari</p>
-                                <p className="text-[10px] text-gray-500">Mulai lagi kebiasaan dona...</p>
+                                <p className="text-[10px] text-gray-500"></p>
                             </div>
                         </div>
                     </motion.div>
@@ -199,7 +199,7 @@ const AttendanceCalendar = () => {
                             </div>
                             <div>
                                 <p className="text-xl font-bold text-gray-800">{stats.streak} hari</p>
-                                <p className="text-[10px] text-gray-500">Ciptakan reko donasimu</p>
+                                <p className="text-[10px] text-gray-500"></p>
                             </div>
                         </div>
                     </motion.div>
