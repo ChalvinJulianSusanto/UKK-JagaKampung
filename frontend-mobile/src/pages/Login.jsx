@@ -25,6 +25,7 @@ const Login = () => {
 
   // State for dynamic card position
   const [cardTopPosition, setCardTopPosition] = useState('38%');
+  const [cardMaxHeight, setCardMaxHeight] = useState('75vh');
 
   // State scroll limits
   const [limits, setLimits] = useState({ min: 0, max: 0 });
@@ -43,36 +44,46 @@ const Login = () => {
     const calculateLimits = () => {
       const windowHeight = window.innerHeight;
 
-      // Adaptif untuk layar kecil vs besar
-      // Pada layar kecil (< 700px), kartu dimulai lebih rendah agar tidak terpotong
-      // Pada layar besar, kartu bisa lebih tinggi untuk menampilkan background
+      // PERBAIKAN AGRESIF: Card mulai sangat rendah di layar kecil/sedang
+      // untuk memastikan semua konten termasuk tombol Google terlihat
       let startPercentage;
       let stopPercentage;
+      let maxCardHeight;
 
-      if (windowHeight < 600) {
-        // Layar sangat kecil (misal iPhone SE)
-        startPercentage = 0.50; // Mulai lebih rendah
-        stopPercentage = 0.30;  // Berhenti lebih rendah
-      } else if (windowHeight < 700) {
-        // Layar kecil-sedang
-        startPercentage = 0.45;
-        stopPercentage = 0.25;
-      } else if (windowHeight < 800) {
+      if (windowHeight < 650) {
+        // Layar sangat kecil (iPhone SE, dll)
+        startPercentage = 0.68; // Mulai SANGAT rendah
+        stopPercentage = 0.40;
+        maxCardHeight = '58vh'; // Height sangat kecil
+      } else if (windowHeight < 750) {
+        // Layar kecil (iPhone 12 Mini: 780px, dll)
+        startPercentage = 0.65; // Mulai sangat rendah  
+        stopPercentage = 0.38;
+        maxCardHeight = '60vh';
+      } else if (windowHeight < 850) {
+        // Layar sedang-kecil
+        startPercentage = 0.58;
+        stopPercentage = 0.32;
+        maxCardHeight = '65vh';
+      } else if (windowHeight < 950) {
         // Layar sedang
-        startPercentage = 0.40;
-        stopPercentage = 0.22;
+        startPercentage = 0.50;
+        stopPercentage = 0.28;
+        maxCardHeight = '70vh';
       } else {
-        // Layar besar
-        startPercentage = 0.38;
-        stopPercentage = 0.20;
+        // Layar besar (>= 950px)
+        startPercentage = 0.42;
+        stopPercentage = 0.22;
+        maxCardHeight = '80vh';
       }
 
       const startPosition = windowHeight * startPercentage;
       const targetStopPosition = windowHeight * stopPercentage;
       const maxUpwardDistance = targetStopPosition - startPosition;
 
-      // Update posisi kartu secara dinamis
+      // Update posisi dan tinggi kartu secara dinamis
       setCardTopPosition(`${startPercentage * 100}%`);
+      setCardMaxHeight(maxCardHeight);
 
       setLimits({
         min: maxUpwardDistance,
@@ -338,28 +349,28 @@ const Login = () => {
         style={{
           top: cardTopPosition,
           height: 'auto',
-          maxHeight: '85vh',
+          maxHeight: cardMaxHeight,
           willChange: 'transform',
           touchAction: 'none',
-          paddingBottom: '60px',
+          paddingBottom: '40px',
           overflowY: 'auto'
         }}
       >
         {/* Handle */}
         <div className="flex justify-center pt-4 pb-3">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+          <div className="w-12 h-1.5" />
         </div>
 
-        {/* Content - Padding bawah dikurangi (pb-10 jadi pb-5) */}
-        <div className="px-6 pb-5">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Selamat Datang Di JagaKampung!</h1>
+        {/* Content - Spacing optimized for small screens */}
+        <div className="px-6 pb-3">
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1.5">Selamat Datang Di JagaKampung!</h1>
             <p className="text-gray-500 text-sm leading-relaxed">
               Login atau Register sekarang! untuk menikmati semua fitur yang tersedia.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <input
@@ -409,12 +420,12 @@ const Login = () => {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-600 mt-5">
+          <p className="text-center text-sm text-gray-600 mt-3">
             Belum punya akun?{' '}
             <Link to="/register" className="text-blue-500 font-semibold">Daftar Sekarang</Link>
           </p>
 
-          <div className="flex items-center my-4">
+          <div className="flex items-center my-3">
             <div className="flex-1 h-px bg-gray-200" />
             <span className="px-3 text-xs text-gray-400">Atau gunakan akun</span>
             <div className="flex-1 h-px bg-gray-200" />
