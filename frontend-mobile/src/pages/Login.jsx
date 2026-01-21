@@ -6,8 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 // Assets
-import logoPutih from '../assets/putih.png';
 import googleIcon from '../assets/google.png';
+import bgLogin from '../assets/bg-login.png';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -30,8 +30,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Limits
-  const minY = -200;
+  // Limits (Diperluas agar swipe ke atas bisa lebih tinggi jika layar kecil)
+  const minY = -350; // Sebelumnya -200, ditambah agar leluasa di layar kecil
   const maxY = 0;
 
   // Apply transform directly
@@ -117,12 +117,11 @@ const Login = () => {
     }
   };
 
-  // Google Login with useGoogleLogin hook (popup flow, no One Tap)
+  // Google Login Logic ...
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       try {
-        // Get user info from Google using access token
         const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: {
             Authorization: `Bearer ${tokenResponse.access_token}`,
@@ -130,8 +129,6 @@ const Login = () => {
         });
 
         const userInfo = await userInfoResponse.json();
-
-        // Create credential for backend (base64 encoded user info)
         const credential = btoa(JSON.stringify({
           email: userInfo.email,
           name: userInfo.name,
@@ -161,47 +158,36 @@ const Login = () => {
       console.error('Google login error:', error);
       toast.error('Google login gagal. Silakan coba lagi.');
     },
-    flow: 'implicit', // Use popup flow
+    flow: 'implicit',
   });
 
-  // Handler for button click
   const handleGoogleLogin = () => {
     googleLogin();
   };
 
-  // Aggressively disable Google One Tap when component mounts
   useEffect(() => {
     const disableGoogleOneTap = () => {
       if (window.google?.accounts?.id) {
         try {
-          // Cancel any active prompts
           window.google.accounts.id.cancel();
-          // Disable auto-select
           window.google.accounts.id.disableAutoSelect();
         } catch (error) {
           console.log('Error disabling Google One Tap:', error);
         }
       }
     };
-
-    // Disable immediately
     disableGoogleOneTap();
-
-    // Keep disabling every 500ms for the first 5 seconds
     const interval = setInterval(disableGoogleOneTap, 500);
-
-    // Clear interval after 5 seconds
     const timeout = setTimeout(() => {
       clearInterval(interval);
     }, 5000);
-
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
     };
   }, []);
 
-  // Touch handling with passive: false for immediate response
+  // Touch & Mouse Event Listeners ...
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
@@ -209,7 +195,6 @@ const Login = () => {
     let isDragging = false;
 
     const onTouchStart = (e) => {
-      // Skip if touching input or button
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'button' || tag === 'a') return;
 
@@ -217,28 +202,21 @@ const Login = () => {
       lastTouchY.current = e.touches[0].clientY;
       lastTime.current = performance.now();
       velocity.current = 0;
-
-      // Remove transition for immediate response
       card.style.transition = 'none';
     };
 
     const onTouchMove = (e) => {
       if (!isDragging) return;
-
       const touchY = e.touches[0].clientY;
       const now = performance.now();
       const deltaY = touchY - lastTouchY.current;
       const deltaTime = now - lastTime.current;
 
-      // Calculate velocity
       if (deltaTime > 0) {
         velocity.current = deltaY / deltaTime;
       }
 
-      // Update position immediately
       let newY = currentTranslate.current + deltaY;
-
-      // Rubber band at edges
       if (newY > maxY) {
         newY = maxY + (newY - maxY) * 0.3;
       } else if (newY < minY) {
@@ -247,49 +225,34 @@ const Login = () => {
 
       currentTranslate.current = newY;
       setTransform(newY);
-
       lastTouchY.current = touchY;
       lastTime.current = now;
-
-      // Prevent page scroll
-      e.preventDefault();
+      e.preventDefault(); // Prevent scroll only when dragging card
     };
 
     const onTouchEnd = () => {
       if (!isDragging) return;
       isDragging = false;
-
-      // Determine target based on velocity and position
       const vel = velocity.current;
       let target;
-
       if (Math.abs(vel) > 0.5) {
-        // High velocity - use velocity direction
         target = vel < 0 ? minY : maxY;
       } else {
-        // Low velocity - snap to nearest
         const mid = (minY + maxY) / 2;
         target = currentTranslate.current < mid ? minY : maxY;
       }
-
-      // Clamp target
       target = Math.max(minY, Math.min(maxY, target));
-
       animateTo(target);
     };
 
-    // Add event listeners with passive: false for immediate response
     card.addEventListener('touchstart', onTouchStart, { passive: true });
     card.addEventListener('touchmove', onTouchMove, { passive: false });
     card.addEventListener('touchend', onTouchEnd, { passive: true });
 
-    // Mouse events for desktop
     let isMouseDragging = false;
-
     const onMouseDown = (e) => {
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'button' || tag === 'a') return;
-
       isMouseDragging = true;
       lastTouchY.current = e.clientY;
       lastTime.current = performance.now();
@@ -300,26 +263,20 @@ const Login = () => {
 
     const onMouseMove = (e) => {
       if (!isMouseDragging) return;
-
       const now = performance.now();
       const deltaY = e.clientY - lastTouchY.current;
       const deltaTime = now - lastTime.current;
-
       if (deltaTime > 0) {
         velocity.current = deltaY / deltaTime;
       }
-
       let newY = currentTranslate.current + deltaY;
-
       if (newY > maxY) {
         newY = maxY + (newY - maxY) * 0.3;
       } else if (newY < minY) {
         newY = minY + (newY - minY) * 0.3;
       }
-
       currentTranslate.current = newY;
       setTransform(newY);
-
       lastTouchY.current = e.clientY;
       lastTime.current = now;
     };
@@ -327,17 +284,14 @@ const Login = () => {
     const onMouseUp = () => {
       if (!isMouseDragging) return;
       isMouseDragging = false;
-
       const vel = velocity.current;
       let target;
-
       if (Math.abs(vel) > 0.5) {
         target = vel < 0 ? minY : maxY;
       } else {
         const mid = (minY + maxY) / 2;
         target = currentTranslate.current < mid ? minY : maxY;
       }
-
       target = Math.max(minY, Math.min(maxY, target));
       animateTo(target);
     };
@@ -357,22 +311,34 @@ const Login = () => {
   }, []);
 
   return (
-    <div className="h-screen w-full overflow-hidden relative bg-gradient-to-b from-blue-600 to-blue-500">
-      {/* Background with Logo */}
-      <div className="absolute inset-0 flex flex-col items-center pt-16 pointer-events-none">
-        <img src={logoPutih} alt="JagaKampung" className="h-20 object-contain" />
-        <p className="text-white/80 text-sm mt-3 font-medium">Sistem Absensi Ronda Malam</p>
-      </div>
+    <div 
+      className="h-screen w-full overflow-hidden relative" 
+      style={{
+        // PERBAIKAN BACKGROUND:
+        backgroundImage: `url(${bgLogin})`,
+        // 1. Menggunakan 100% auto agar lebar gambar pas dengan layar (tidak zoom in parah)
+        backgroundSize: '100% auto', 
+        // 2. Posisi Top Center agar Logo "JagaKampung" selalu terlihat di tengah atas
+        backgroundPosition: 'top center',
+        backgroundRepeat: 'no-repeat',
+        // 3. Warna background fallback (biru langit malam) agar seamless jika layar HP sangat panjang
+        backgroundColor: '#0f3a85' 
+      }}
+    >
 
       {/* White Card */}
       <div
         ref={cardRef}
         className="absolute left-0 right-0 bg-white rounded-t-[32px] shadow-2xl select-none cursor-grab active:cursor-grabbing"
         style={{
-          top: '38%',
+          // PERBAIKAN POSISI KARTU:
+          // Sebelumnya 55%, diubah ke 42% agar gambar terlihat jelas tapi form tetap mudah dijangkau.
+          // Angka ini membuat kartu menutupi bagian 'jalan' pada gambar, tapi menampilkan 'orang & logo'.
+          top: '42%', 
           minHeight: '80vh',
           willChange: 'transform',
-          touchAction: 'none'
+          touchAction: 'none',
+          paddingBottom: '100px' // Tambahan padding bawah agar aman saat scroll/bounce
         }}
       >
         {/* Handle */}
@@ -454,7 +420,7 @@ const Login = () => {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          {/* Google Sign In - Custom Button (No One Tap!) */}
+          {/* Google Sign In */}
           <button
             type="button"
             onClick={handleGoogleLogin}
