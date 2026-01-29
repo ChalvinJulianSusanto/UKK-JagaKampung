@@ -1,37 +1,95 @@
 const Activity = require('../models/Activity');
 const fs = require('fs').promises;
 const path = require('path');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
 
-// Helper function untuk save file dari buffer
+// Helper function untuk save file (Cloudinary or Local)
 const saveActivityPhoto = async (file) => {
-    const uploadDir = path.join(__dirname, '../uploads/activities');
+    // Check if Cloudinary is configured
+    const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME &&
+        process.env.CLOUDINARY_API_KEY &&
+        process.env.CLOUDINARY_API_SECRET;
 
-    // Ensure directory exists
-    try {
-        await fs.access(uploadDir);
-    } catch {
-        await fs.mkdir(uploadDir, { recursive: true });
+    if (isCloudinaryConfigured) {
+        return new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'JagaKampung/activities',
+                    resource_type: 'image',
+                },
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result.secure_url);
+                }
+            );
+            streamifier.createReadStream(file.buffer).pipe(uploadStream);
+        });
+    } else {
+        // Fallback to local storage
+        const uploadDir = path.join(__dirname, '../uploads/activities');
+
+        // Ensure directory exists
+        try {
+            await fs.access(uploadDir);
+        } catch {
+            await fs.mkdir(uploadDir, { recursive: true });
+        }
+
+        const timestamp = Date.now();
+        const filename = `activity-${timestamp}-${file.originalname.replace(/[^a-zA-Z0-9.]/g, '')}`;
+        const filepath = path.join(uploadDir, filename);
+
+        await fs.writeFile(filepath, file.buffer);
+        return `/uploads/activities/${filename}`;
     }
-
-    const timestamp = Date.now();
-    const filename = `activity-${timestamp}-${file.originalname}`;
-    const filepath = path.join(uploadDir, filename);
-
-    await fs.writeFile(filepath, file.buffer);
-    return `/uploads/activities/${filename}`;
 };
 
 // Helper function untuk delete file
 const deleteActivityPhoto = async (photoPath) => {
     if (!photoPath) return;
 
-    try {
-        const filepath = path.join(__dirname, '..', photoPath);
-        await fs.unlink(filepath);
-    } catch (error) {
-        console.error('Error deleting photo:', error.message);
+    // Check if it's a Cloudinary URL
+    if (photoPath.startsWith('http')) {
+        const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME &&
+            process.env.CLOUDINARY_API_KEY &&
+            process.env.CLOUDINARY_API_SECRET;
+
+        if (isCloudinaryConfigured) {
+            try {
+                // Extract public_id from URL
+                // Example: https://res.cloudinary.com/demo/image/upload/v123456789/folder/my_image.jpg
+                const parts = photoPath.split('/');
+                const filename = parts[parts.length - 1];
+                const publicIdWithExt = `JagaKampung/activities/${filename}`;
+                const publicId = publicIdWithExt.split('.')[0];
+
+                // Note: This extraction is naive. For robust deletion, we should store public_id. 
+                // But for now, let's try this or just log a warning if we can't delete.
+                // Or better: extract everything after 'upload/v[version]/' until extension
+
+                // Simplest extraction strategy for our folder structure:
+                const folderIndex = parts.indexOf('JagaKampung');
+                if (folderIndex !== -1) {
+                    const publicId = parts.slice(folderIndex).join('/').replace(/\.[^/.]+$/, "");
+                    await cloudinary.uploader.destroy(publicId);
+                }
+            } catch (error) {
+                console.error('Error deleting Cloudinary photo:', error.message);
+            }
+        }
+    } else {
+        // Local file
+        try {
+            const filepath = path.join(__dirname, '..', photoPath);
+            await fs.unlink(filepath);
+        } catch (error) {
+            console.error('Error deleting local photo:', error.message);
+        }
     }
 };
+
+
 
 // @desc    Get all activities
 // @route   GET /api/activities

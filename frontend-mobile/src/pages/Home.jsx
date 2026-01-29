@@ -1240,19 +1240,19 @@ const ActivityDocumentation = () => {
             onDragEnd={(e, { offset, velocity }) => {
               const swipe = Math.abs(offset.x) * velocity.x;
               const swipeThreshold = 5000;
-              // Trigger slide if swiped fast or dragged far enough
               if (swipe < -swipeThreshold || offset.x < -100) {
                 handleNext();
               } else if (swipe > swipeThreshold || offset.x > 100) {
                 handlePrev();
               }
             }}
-            className="w-full h-full object-cover absolute inset-0 cursor-grab active:cursor-grabbing"
+            className="w-full h-full object-cover absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
+            style={{ touchAction: 'pan-y' }}
           />
         </AnimatePresence>
 
         {/* Overlay - Show only on hover */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           <motion.h3
             key={`title-${currentIndex}`}
             initial={{ opacity: 0, y: 10 }}
