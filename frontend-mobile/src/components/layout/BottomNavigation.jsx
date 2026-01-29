@@ -46,6 +46,11 @@ const BottomNavigation = () => {
       return path === '/';
     }
 
+    // Special handling for activity detail pages - should activate Home
+    if (location.pathname.startsWith('/activity/')) {
+      return path === '/';
+    }
+
     if (path === '/') {
       return location.pathname === '/';
     }

@@ -6,9 +6,9 @@ const storage = multer.memoryStorage();
 
 // Filter file - hanya terima gambar
 const fileFilter = (req, file, cb) => {
-  // Skip jika bukan field 'photo'
-  if (file.fieldname !== 'photo') {
-    cb(new Error('Hanya field "photo" yang diperbolehkan untuk upload file'));
+  // Check allowed field names
+  if (file.fieldname !== 'photo' && file.fieldname !== 'documentation') {
+    cb(new Error('Field upload tidak valid'));
     return;
   }
 

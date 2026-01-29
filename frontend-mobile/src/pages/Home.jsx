@@ -8,7 +8,9 @@ import {
   User,
   Check, // Icon Centang
   X,     // Icon Silang
-  Loader2
+  Loader2,
+  MapPin,
+  Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -32,7 +34,7 @@ import ngananIcon from '../assets/nganan.png';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 // Gunakan authAPI untuk update profil, dashboardAPI untuk statistik
-import { attendancesAPI, authAPI, notificationsAPI, schedulesAPI } from '../api';
+import { attendancesAPI, authAPI, notificationsAPI, schedulesAPI, activitiesAPI } from '../api';
 import { getTodayPartner } from '../api/schedules';
 import { Button, Badge, Loading, EmptyState, Modal } from '../components/common';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isBefore, startOfDay } from 'date-fns';
@@ -995,7 +997,7 @@ const AttendanceRecap = () => {
       className="mb-6"
     >
       {/* Title */}
-      <h2 className="text-lg font-bold text-gray-800 mb-3">Rekap Kehadiran</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3">Rekap Kehadiran</h2>
 
       {/* RT Filter Buttons */}
       <div
@@ -1112,6 +1114,421 @@ const AttendanceRecap = () => {
         )}
       </div>
     </motion.div >
+  );
+};
+
+// --- 5.5 ACTIVITY DOCUMENTATION SLIDER ---
+const ActivityDocumentation = () => {
+  const [docs, setDocs] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [direction, setDirection] = useState(0); // For slide animation direction
+  const [isHovered, setIsHovered] = useState(false); // For hover state
+
+  useEffect(() => {
+    fetchDocumentation();
+  }, []);
+
+  useEffect(() => {
+    if (docs.length <= 1) return;
+
+    // Auto slide every 5 seconds
+    const interval = setInterval(() => {
+      handleNext();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [docs.length, currentIndex]);
+
+  const fetchDocumentation = async () => {
+    try {
+      setLoading(true);
+      // Fetch documentation feed: limit 10, expiry handled by backend (7 days)
+      const response = await activitiesAPI.getAll({ isDocumentationFeed: 'true', limit: 10 });
+
+      if (response.data && response.data.data) {
+        setDocs(response.data.data);
+      } else {
+        setDocs([]);
+      }
+    } catch (error) {
+      console.error('Error fetching documentation:', error);
+      setDocs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = () => {
+    setDirection(1);
+    setCurrentIndex((prev) => (prev + 1) % docs.length);
+  };
+
+  const handlePrev = () => {
+    setDirection(-1);
+    setCurrentIndex((prev) => (prev - 1 + docs.length) % docs.length);
+  };
+
+  const currentDoc = docs[currentIndex];
+
+  if (loading) return null;
+  if (docs.length === 0) return null;
+
+  const getPhotoUrl = (photoPath) => {
+    if (!photoPath) return null;
+    if (photoPath.startsWith('http')) return photoPath;
+
+    const apiBaseUrl = (import.meta.env.VITE_API_URL ||
+      (window.location.hostname.includes('vercel.app')
+        ? 'https://ukk-jagakampung.onrender.com/api'
+        : 'http://localhost:5000/api')).replace('/api', '');
+
+    return `${apiBaseUrl}${photoPath}`;
+  };
+
+  // Prioritize documentation photo (first one), fall back to main photo
+  const displayPhoto = (currentDoc.documentation && currentDoc.documentation.length > 0)
+    ? getPhotoUrl(currentDoc.documentation[0])
+    : getPhotoUrl(currentDoc.photo);
+
+  const slideVariants = {
+    enter: (direction) => ({
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0
+    }),
+    center: {
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction) => ({
+      x: direction > 0 ? '-100%' : '100%',
+      opacity: 0
+    })
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="mb-6 -mx-5"
+    >
+      <h2 className="text-lg font-semibold text-gray-800 mb-3 px-5">Kegiatan RW 01</h2>
+
+      <div
+        className="relative w-full aspect-video overflow-hidden bg-gray-200 group"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <AnimatePresence initial={false} custom={direction} mode="sync">
+          <motion.img
+            key={currentIndex}
+            src={displayPhoto}
+            alt={currentDoc.title}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
+            className="w-full h-full object-cover absolute inset-0"
+          />
+        </AnimatePresence>
+
+        {/* Overlay - Show only on hover */}
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          <motion.h3
+            key={`title-${currentIndex}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
+            transition={{ delay: 0.1 }}
+            className="text-white font-bold text-lg leading-tight mb-1"
+          >
+            {currentDoc.title}
+          </motion.h3>
+          <motion.p
+            key={`date-${currentIndex}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
+            transition={{ delay: 0.15 }}
+            className="text-blue-200 text-sm font-medium"
+          >
+            {format(new Date(currentDoc.eventDate), 'dd MMMM yyyy', { locale: id })}
+          </motion.p>
+        </div>
+
+        {/* Navigation buttons - left & right */}
+       
+
+        {/* Indicators - Bottom Center */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          {docs.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                setDirection(idx > currentIndex ? 1 : -1);
+                setCurrentIndex(idx);
+              }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
+                  ? 'w-8 bg-white'
+                  : 'w-1.5 bg-white/60 hover:bg-white/80'
+                }`}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- 6. ACTIVITIES SECTION (KEGIATAN RW 01) ---
+const ActivitiesSection = ({ navigate }) => {
+  const [selectedRT, setSelectedRT] = useState('RW-01');
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const rtOptions = ['RW-01', 'RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06'];
+
+  useEffect(() => {
+    fetchActivities();
+  }, [selectedRT]);
+
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+      const params = { limit: 10, category: 'activity' }; // Only fetch regular activities, not documentation
+      if (selectedRT && selectedRT === 'RW-01') {
+        // RW-01 means activities that are for all RTs (RW level)
+        params.rt = 'RW-01';
+      } else if (selectedRT && selectedRT !== 'RW-01') {
+        // Extract RT number (e.g., 'RT 01' -> '01')
+        params.rt = selectedRT.split(' ')[1];
+      }
+
+      console.log('[Activities] Fetching with params:', params);
+      const response = await activitiesAPI.getAll(params);
+      console.log('[Activities] API Response:', response);
+
+      // Axios response structure: response.data.data
+      if (response.data && response.data.success && response.data.data) {
+        console.log('[Activities] Setting activities:', response.data.data.length, 'items');
+        setActivities(response.data.data);
+      } else {
+        console.log('[Activities] No data in response');
+        setActivities([]);
+      }
+    } catch (error) {
+      console.error('[Activities] Error fetching activities:', error);
+      setActivities([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDaysRemaining = (eventDate) => {
+    const today = new Date();
+    const event = new Date(eventDate);
+    const diffTime = event - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return null; // Don't show for past events
+    if (diffDays === 0) return 'Hari ini';
+    if (diffDays === 1) return 'Besok';
+    return `${diffDays} hari lagi`;
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return format(date, 'dd MM yyyy', { locale: id });
+  };
+
+  const getComputedStatus = (activity) => {
+    let status = activity.status;
+    if (activity.time && activity.eventDate) {
+      const now = new Date();
+      const eventISODate = new Date(activity.eventDate).toISOString().split('T')[0];
+      const todayISODate = now.toISOString().split('T')[0];
+      const dateCompare = new Date(eventISODate) - new Date(todayISODate);
+
+      if (dateCompare > 0) status = 'upcoming';
+      else if (dateCompare < 0) status = 'completed';
+      else {
+        const [h, m] = activity.time.split(':');
+        const eventTime = new Date();
+        eventTime.setHours(h, m, 0);
+        status = now >= eventTime ? 'ongoing' : 'upcoming';
+      }
+    }
+    return status;
+  };
+
+  const getStatusConfig = (status) => {
+    const statusMap = {
+      upcoming: { label: 'Akan Datang', bg: 'bg-blue-500', text: 'text-white' },
+      ongoing: { label: 'Berlangsung', bg: 'bg-green-500', text: 'text-white' },
+      completed: { label: 'Selesai', bg: 'bg-gray-500', text: 'text-white' }
+    };
+    return statusMap[status] || statusMap.upcoming;
+  };
+
+  const getPhotoUrl = (photoPath) => {
+    if (!photoPath) return null;
+    if (photoPath.startsWith('http')) return photoPath;
+
+    const apiBaseUrl = (import.meta.env.VITE_API_URL ||
+      (window.location.hostname.includes('vercel.app')
+        ? 'https://ukk-jagakampung.onrender.com/api'
+        : 'http://localhost:5000/api')).replace('/api', '');
+
+    return `${apiBaseUrl}${photoPath}`;
+  };
+
+  const handleActivityClick = (activity) => {
+    navigate(`/activity/${activity._id}`);
+  };
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-6"
+      >
+        {/* Header */}
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">Informasi kegiatan RW-01</h2>
+
+        {/* RT Filter Tabs */}
+        <div
+          className="flex gap-2 overflow-x-auto pb-3 mb-4"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          <style>{`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+          {rtOptions.map((rt) => {
+            const isSelected = selectedRT === rt;
+
+            return (
+              <motion.button
+                key={rt}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedRT(rt)}
+                className={`relative flex-shrink-0 px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap ${isSelected
+                  ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-sm'
+                  : 'bg-white text-gray-500 border border-gray hover:bg-gray-50 '
+                  }`}
+              >
+                {rt}
+                {isSelected && (
+                  <motion.div
+                    layoutId="activeActivityFilter"
+                    className="absolute inset-0 border border-blue-200 rounded-full"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Activities Cards - Horizontal Scroll */}
+        <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+          {loading ? (
+            <div className="bg-white rounded-2xl p-8 text-center w-full">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-2" />
+              <p className="text-gray-500 text-sm">Memuat kegiatan...</p>
+            </div>
+          ) : activities.length > 0 ? (
+            activities.map((activity) => {
+              const daysRemaining = getDaysRemaining(activity.eventDate);
+              const photoUrl = getPhotoUrl(activity.photo);
+
+              return (
+                <motion.div
+                  key={activity._id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={() => handleActivityClick(activity)}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex-shrink-0 w-72 cursor-pointer hover:shadow-md transition-shadow"
+                >
+                  {/* Image */}
+                  <div className="relative h-40 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                    {(() => {
+                      const computedStatus = getComputedStatus(activity);
+                      const statusConfig = getStatusConfig(computedStatus);
+                      return (
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide shadow-sm ${statusConfig.bg} ${statusConfig.text}`}>
+                            {statusConfig.label}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    {photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt={activity.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="text-gray-400">
+                        <MaskedIcon src={gambarIcon} size={32} color="#9CA3AF" alt="No Image" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4 pb-4">
+                    {/* Title */}
+                    <h3 className="font-semibold text-base text-gray-800 mb-2 line-clamp-2 leading-snug h-[2.5rem]">
+                      {activity.title}
+                    </h3>
+
+                    {/* Date & Time */}
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
+                      <Calendar size={14} className="shrink-0" />
+                      <span>{format(new Date(activity.eventDate), 'dd MMM yyyy', { locale: id })}</span>
+                      {activity.time && (
+                        <>
+                          <span className="text-gray-300">|</span>
+                          <Clock size={14} className="shrink-0" />
+                          <span>{activity.time}</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Location */}
+                    {(activity.location || activity.rt) && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <MapPin size={14} className="shrink-0" />
+                        <span className="truncate">{activity.location ? activity.location : `RT ${activity.rt}`}</span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })
+          ) : (
+            <div className="bg-white rounded-2xl p-8 text-center w-full">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Clock className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 font-medium">Belum ada kegiatan</p>
+              <p className="text-gray-400 text-sm mt-1">untuk {selectedRT || 'semua RT'}</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </>
   );
 };
 
@@ -1276,6 +1693,12 @@ const Home = () => {
 
         {/* Attendance Recap Section */}
         <AttendanceRecap />
+
+        {/* Activity Documentation Section */}
+        <ActivityDocumentation />
+
+        {/* Activities Section (Kegiatan RW 01) */}
+        <ActivitiesSection navigate={navigate} />
 
 
       </div>

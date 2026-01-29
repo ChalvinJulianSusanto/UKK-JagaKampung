@@ -69,6 +69,10 @@ app.use('/api/attendances', require('./routes/attendanceRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/attendance-recaps', require('./routes/attendanceRecapRoutes'));
+app.use('/api/activities', require('./routes/activityRoutes'));
+app.use('/api/iuran', require('./routes/iuranRoutes'));
+app.use('/api/budgets', require('./routes/budgetRoutes'));
+app.use('/api/income', require('./routes/incomeRoutes'));
 
 // Health check route
 app.get('/', (req, res) => {

@@ -12,8 +12,10 @@ const Dashboard = lazyWithPreload(() => import('./pages/Dashboard'));
 const Users = lazyWithPreload(() => import('./pages/Users'));
 const Schedules = lazyWithPreload(() => import('./pages/Schedules'));
 const Attendances = lazyWithPreload(() => import('./pages/Attendances'));
-const Analytics = lazyWithPreload(() => import('./pages/Analytics'));
 const Reports = lazyWithPreload(() => import('./pages/Reports'));
+const Activities = lazyWithPreload(() => import('./pages/Activities'));
+const Finances = lazyWithPreload(() => import('./pages/Finances'));
+const FinanceManagement = lazyWithPreload(() => import('./pages/FinanceManagement'));
 const Settings = lazyWithPreload(() => import('./pages/Settings'));
 
 // Export lazy components untuk prefetching
@@ -22,8 +24,10 @@ export const lazyComponents = {
   Users,
   Schedules,
   Attendances,
-  Analytics,
   Reports,
+  Activities,
+  Finances,
+  FinanceManagement,
   Settings,
 };
 
@@ -150,15 +154,31 @@ function App() {
                 <Attendances />
               </Suspense>
             } />
-            <Route path="analytics" element={
-              <Suspense fallback={<Loading delay={150} />}>
-                <Analytics />
-              </Suspense>
-            } />
             <Route path="reports" element={
               <AdminRoute>
                 <Suspense fallback={<Loading delay={150} />}>
                   <Reports />
+                </Suspense>
+              </AdminRoute>
+            } />
+            <Route path="activities" element={
+              <AdminRoute>
+                <Suspense fallback={<Loading delay={150} />}>
+                  <Activities />
+                </Suspense>
+              </AdminRoute>
+            } />
+            <Route path="finances" element={
+              <AdminRoute>
+                <Suspense fallback={<Loading delay={150} />}>
+                  <Finances />
+                </Suspense>
+              </AdminRoute>
+            } />
+            <Route path="finance-management" element={
+              <AdminRoute>
+                <Suspense fallback={<Loading delay={150} />}>
+                  <FinanceManagement />
                 </Suspense>
               </AdminRoute>
             } />

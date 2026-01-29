@@ -21,6 +21,7 @@ import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import AttendanceCalendar from './pages/AttendanceCalendar';
 import CompleteProfile from './pages/CompleteProfile';
+import ActivityDetail from './pages/ActivityDetail';
 
 // Public Route wrapper - redirect to home if already authenticated
 const PublicRoute = ({ children }) => {
@@ -103,6 +104,7 @@ function AppRoutes() {
         <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<Profile />} />
         <Route path="attendance-calendar" element={<AttendanceCalendar />} />
+        <Route path="activity/:id" element={<ActivityDetail />} />
       </Route>
 
       {/* Complete Profile Route - Protected but separate from main layout */}
