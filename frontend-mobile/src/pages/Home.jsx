@@ -1234,7 +1234,20 @@ const ActivityDocumentation = () => {
               x: { type: "spring", stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 }
             }}
-            className="w-full h-full object-cover absolute inset-0"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = Math.abs(offset.x) * velocity.x;
+              const swipeThreshold = 5000;
+              // Trigger slide if swiped fast or dragged far enough
+              if (swipe < -swipeThreshold || offset.x < -100) {
+                handleNext();
+              } else if (swipe > swipeThreshold || offset.x > 100) {
+                handlePrev();
+              }
+            }}
+            className="w-full h-full object-cover absolute inset-0 cursor-grab active:cursor-grabbing"
           />
         </AnimatePresence>
 
@@ -1261,7 +1274,7 @@ const ActivityDocumentation = () => {
         </div>
 
         {/* Navigation buttons - left & right */}
-       
+
 
         {/* Indicators - Bottom Center */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
@@ -1273,8 +1286,8 @@ const ActivityDocumentation = () => {
                 setCurrentIndex(idx);
               }}
               className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
-                  ? 'w-8 bg-white'
-                  : 'w-1.5 bg-white/60 hover:bg-white/80'
+                ? 'w-8 bg-white'
+                : 'w-1.5 bg-white/60 hover:bg-white/80'
                 }`}
             />
           ))}

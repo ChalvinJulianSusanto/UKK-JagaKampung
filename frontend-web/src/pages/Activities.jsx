@@ -17,6 +17,12 @@ const STATUS_OPTIONS = [
     { value: 'completed', label: 'Selesai', color: 'gray' }
 ];
 
+const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${path}`;
+};
+
 const Activities = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -119,10 +125,7 @@ const Activities = () => {
     };
 
     const handleOpenPhotoViewer = (photos, startIndex = 0) => {
-        const formattedPhotos = photos.map(photo => {
-            if (photo.startsWith('http')) return photo;
-            return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${photo}`;
-        });
+        const formattedPhotos = photos.map(photo => getImageUrl(photo));
         setPhotoGallery(formattedPhotos);
         setCurrentPhotoIndex(startIndex);
         setShowPhotoViewer(true);
@@ -148,8 +151,8 @@ const Activities = () => {
                 location: activity.location || '',
                 status: activity.status
             });
-            setPhotoPreview(activity.photo ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${activity.photo}` : null);
-            setDocPreviews(activity.documentation ? activity.documentation.map(doc => `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${doc}`) : []);
+            setPhotoPreview(activity.photo ? getImageUrl(activity.photo) : null);
+            setDocPreviews(activity.documentation ? activity.documentation.map(doc => getImageUrl(doc)) : []);
         } else {
             setSelectedActivity(null);
             setFormData({
@@ -534,20 +537,23 @@ const Activities = () => {
                 </div>
 
                 <div className="flex gap-3">
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                    >
-                        <Plus size={18} />
-                        <span>Tambah Kegiatan</span>
-                    </button>
-                    <button
-                        onClick={handleOpenDocModal}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-                    >
-                        <Upload size={18} />
-                        <span>Upload Dokumentasi</span>
-                    </button>
+                    {activeTab === 'kegiatan' ? (
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            <Plus size={18} />
+                            <span>Tambah Kegiatan</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleOpenDocModal}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                        >
+                            <Upload size={18} />
+                            <span>Upload Dokumentasi</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -727,7 +733,7 @@ const Activities = () => {
                                     <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                                         {activity.photo ? (
                                             <img
-                                                src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${activity.photo}`}
+                                                src={getImageUrl(activity.photo)}
                                                 alt={activity.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
@@ -807,7 +813,7 @@ const Activities = () => {
                                         <div className="relative w-28 h-28 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                                             {activity.photo ? (
                                                 <img
-                                                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${activity.photo}`}
+                                                    src={getImageUrl(activity.photo)}
                                                     alt={activity.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
@@ -942,7 +948,7 @@ const Activities = () => {
                                         >
                                             {activity.documentation && activity.documentation.length > 0 ? (
                                                 <img
-                                                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${activity.documentation[0]}`}
+                                                    src={getImageUrl(activity.documentation[0])}
                                                     alt={activity.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
@@ -1014,7 +1020,7 @@ const Activities = () => {
                                             >
                                                 {activity.documentation && activity.documentation.length > 0 ? (
                                                     <img
-                                                        src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${activity.documentation[0]}`}
+                                                        src={getImageUrl(activity.documentation[0])}
                                                         alt={activity.title}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                     />
@@ -1161,7 +1167,7 @@ const Activities = () => {
                                                             }}
                                                         >
                                                             <img
-                                                                src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${doc}`}
+                                                                src={getImageUrl(doc)}
                                                                 alt={`Dokumentasi ${idx + 1}`}
                                                                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                                             />
@@ -1183,7 +1189,7 @@ const Activities = () => {
                                                             Foto Kegiatan
                                                         </h3>
                                                         <img
-                                                            src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${detailActivity.photo}`}
+                                                            src={getImageUrl(detailActivity.photo)}
                                                             alt={detailActivity.title}
                                                             className="w-full rounded-lg border border-gray-200"
                                                         />
