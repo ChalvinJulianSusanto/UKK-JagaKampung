@@ -1123,17 +1123,19 @@ const ActivityDocumentation = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const isDragging = useRef(false);
 
   useEffect(() => {
     fetchDocumentation();
   }, []);
 
   useEffect(() => {
-    if (docs.length <= 1 || isHovered || isDragging) return;
+    if (docs.length <= 1) return;
 
     // Auto slide every 5 seconds (Stop at end, paused on hover/drag)
     const interval = setInterval(() => {
+      if (isHovered || isDragging.current) return;
+
       setCurrentIndex((prev) => {
         if (prev < docs.length - 1) return prev + 1;
         return prev;
@@ -1141,7 +1143,7 @@ const ActivityDocumentation = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length, isHovered, isDragging]);
+  }, [docs.length, isHovered]);
 
   const fetchDocumentation = async () => {
     try {
@@ -1205,13 +1207,12 @@ const ActivityDocumentation = () => {
           drag="x"
           // Calculate constraints based on current index to lock movement correctly
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={{
-            left: currentIndex === docs.length - 1 ? 0.1 : 0.9,
-            right: currentIndex === 0 ? 0.1 : 0.9
+          dragElastic={0.7} // Constant elasticity for consistent feel
+          onDragStart={() => {
+            isDragging.current = true;
           }}
-          onDragStart={() => setIsDragging(true)}
           onDragEnd={(e, { offset, velocity }) => {
-            setIsDragging(false);
+            isDragging.current = false;
             const swipeThreshold = 50;
 
             if (offset.x < -swipeThreshold) {
