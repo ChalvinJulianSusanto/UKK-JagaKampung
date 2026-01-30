@@ -10,7 +10,15 @@ import { activitiesAPI } from '../api/activities';
 import gridIcon from '../assets/grid.png';
 import listIcon from '../assets/list.png';
 
-const RT_OPTIONS = ['RW 01', 'RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06'];
+const RT_OPTIONS = [
+    { value: 'RW-01', label: 'RW 01' },
+    { value: '01', label: 'RT 01' },
+    { value: '02', label: 'RT 02' },
+    { value: '03', label: 'RT 03' },
+    { value: '04', label: 'RT 04' },
+    { value: '05', label: 'RT 05' },
+    { value: '06', label: 'RT 06' }
+];
 const STATUS_OPTIONS = [
     { value: 'upcoming', label: 'Akan Datang', color: 'blue' },
     { value: 'ongoing', label: 'Berlangsung', color: 'green' },
@@ -101,7 +109,7 @@ const Activities = () => {
         try {
             setLoading(true);
             const params = {};
-            if (filterRT && filterRT !== 'RW-01') params.rt = filterRT;
+            if (filterRT) params.rt = filterRT;
             if (filterStatus) params.status = filterStatus;
 
             // Filter by category based on active tab
@@ -612,7 +620,7 @@ const Activities = () => {
                                         onClick={() => setIsRTOpen(!isRTOpen)}
                                         className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between transition-all hover:bg-gray-100 outline-none"
                                     >
-                                        <span>{filterRT ? `RT ${filterRT}` : 'Semua'}</span>
+                                        <span>{filterRT ? (RT_OPTIONS.find(o => o.value === filterRT)?.label || filterRT) : 'Semua'}</span>
                                         <ChevronDown size={16} className={`text-gray-400 transition-transform ${isRTOpen ? 'rotate-180' : ''}`} />
                                     </button>
                                     <AnimatePresence>
@@ -630,13 +638,13 @@ const Activities = () => {
                                                     >
                                                         Semua
                                                     </div>
-                                                    {RT_OPTIONS.map(rt => (
+                                                    {RT_OPTIONS.map(option => (
                                                         <div
-                                                            key={rt}
-                                                            onClick={() => { setFilterRT(rt); setIsRTOpen(false); }}
-                                                            className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 ${filterRT === rt ? 'text-blue-600 font-medium bg-blue-50' : 'text-gray-600'}`}
+                                                            key={option.value}
+                                                            onClick={() => { setFilterRT(option.value); setIsRTOpen(false); }}
+                                                            className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 ${filterRT === option.value ? 'text-blue-600 font-medium bg-blue-50' : 'text-gray-600'}`}
                                                         >
-                                                            {rt}
+                                                            {option.label}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -757,7 +765,7 @@ const Activities = () => {
                                         <div className="flex items-center justify-between mb-2">
                                             {getStatusBadge(activity)}
                                             <span className="text-xs font-medium px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                                                {activity.rt}
+                                                {RT_OPTIONS.find(o => o.value === activity.rt)?.label || activity.rt}
                                             </span>
                                         </div>
 
@@ -838,7 +846,7 @@ const Activities = () => {
                                                 <div className="flex items-start justify-between mb-2">
                                                     <h3 className="font-semibold text-base text-gray-800 line-clamp-1">{activity.title}</h3>
                                                     <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium whitespace-nowrap">
-                                                        {activity.rt}
+                                                        {RT_OPTIONS.find(o => o.value === activity.rt)?.label || activity.rt}
                                                     </span>
                                                 </div>
 
@@ -972,7 +980,7 @@ const Activities = () => {
                                             {activeTab === 'kegiatan' && (
                                                 <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                                                     <span>{formatDate(activity.eventDate)}</span>
-                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded font-medium">RT {activity.rt}</span>
+                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded font-medium">{RT_OPTIONS.find(o => o.value === activity.rt)?.label || activity.rt}</span>
                                                 </div>
                                             )}
                                             {activeTab === 'dokumentasi' && (
@@ -1044,7 +1052,7 @@ const Activities = () => {
                                                     {activeTab === 'kegiatan' && (
                                                         <div className="flex items-start justify-between mb-2">
                                                             <h3 className="font-semibold text-base text-gray-800 line-clamp-1">{activity.title}</h3>
-                                                            <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium whitespace-nowrap">RT {activity.rt}</span>
+                                                            <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium whitespace-nowrap">{RT_OPTIONS.find(o => o.value === activity.rt)?.label || activity.rt}</span>
                                                         </div>
                                                     )}
                                                     {activeTab === 'dokumentasi' && (
@@ -1142,7 +1150,7 @@ const Activities = () => {
                                             )}
                                             {activeTab === 'kegiatan' && (
                                                 <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">
-                                                    {detailActivity.rt === 'RW-01' ? 'RW-01' : `RT ${detailActivity.rt}`}
+                                                    {RT_OPTIONS.find(o => o.value === detailActivity.rt)?.label || detailActivity.rt}
                                                 </span>
                                             )}
                                         </div>
@@ -1425,8 +1433,8 @@ const Activities = () => {
                                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                                                     required
                                                 >
-                                                    {RT_OPTIONS.map(rt => (
-                                                        <option key={rt} value={rt}>RT {rt}</option>
+                                                    {RT_OPTIONS.map(option => (
+                                                        <option key={option.value} value={option.value}>{option.label}</option>
                                                     ))}
                                                 </select>
                                             </div>
