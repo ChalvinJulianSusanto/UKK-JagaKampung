@@ -1131,10 +1131,12 @@ const ActivityDocumentation = () => {
   useEffect(() => {
     if (docs.length <= 1) return;
 
-    // Auto slide every 5 seconds
+    // Auto slide every 5 seconds (Stop at end)
     const interval = setInterval(() => {
-      // Auto loop for passive viewing
-      setCurrentIndex((prev) => (prev + 1) % docs.length);
+      setCurrentIndex((prev) => {
+        if (prev < docs.length - 1) return prev + 1;
+        return prev; // Stop at last slide
+      });
     }, 5000);
 
     return () => clearInterval(interval);
@@ -1193,21 +1195,20 @@ const ActivityDocumentation = () => {
         <motion.div
           className="flex h-full cursor-grab active:cursor-grabbing touch-pan-y"
           animate={{ x: `-${currentIndex * 100}%` }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30, mass: 1 }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
+          dragElastic={0.1} // More resistance to strict bounds
           onDragEnd={(e, { offset, velocity }) => {
             const swipe = Math.abs(offset.x) * velocity.x;
-            const swipeThreshold = 500;
+            const swipeThreshold = 100; // Lower threshold = easier swiping
 
+            // Standard swipe logic
             if (offset.x < -50 || (offset.x < 0 && swipe < -swipeThreshold)) {
-              // Dragged Left -> Next
               if (currentIndex < docs.length - 1) {
                 setCurrentIndex(currentIndex + 1);
               }
             } else if (offset.x > 50 || (offset.x > 0 && swipe > swipeThreshold)) {
-              // Dragged Right -> Prev
               if (currentIndex > 0) {
                 setCurrentIndex(currentIndex - 1);
               }
