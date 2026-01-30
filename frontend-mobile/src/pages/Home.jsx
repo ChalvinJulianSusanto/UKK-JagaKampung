@@ -1123,15 +1123,16 @@ const ActivityDocumentation = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     fetchDocumentation();
   }, []);
 
   useEffect(() => {
-    if (docs.length <= 1 || isHovered) return;
+    if (docs.length <= 1 || isHovered || isDragging) return;
 
-    // Auto slide every 5 seconds (Stop at end, paused on hover)
+    // Auto slide every 5 seconds (Stop at end, paused on hover/drag)
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
         if (prev < docs.length - 1) return prev + 1;
@@ -1140,7 +1141,7 @@ const ActivityDocumentation = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length, isHovered]);
+  }, [docs.length, isHovered, isDragging]);
 
   const fetchDocumentation = async () => {
     try {
@@ -1197,23 +1198,26 @@ const ActivityDocumentation = () => {
           animate={{ x: `-${currentIndex * 100}%` }}
           transition={{
             type: "spring",
-            stiffness: 260,
-            damping: 20, // Smoother damping
-            mass: 0.5   // Lighter feel
+            stiffness: 300,
+            damping: 30,
+            mass: 0.8 // Balanced feel
           }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2} // More natural resistance
+          dragElastic={{
+            left: currentIndex === docs.length - 1 ? 0.2 : 1, // Resist next if last
+            right: currentIndex === 0 ? 0.2 : 1 // Resist prev if first
+          }}
+          onDragStart={() => setIsDragging(true)}
           onDragEnd={(e, { offset, velocity }) => {
-            const swipeThreshold = 50; // Simple distance threshold
-            
+            setIsDragging(false);
+            const swipeThreshold = 50;
+
             if (offset.x < -swipeThreshold) {
-              // Dragged Left -> Next
               if (currentIndex < docs.length - 1) {
                 setCurrentIndex(currentIndex + 1);
               }
             } else if (offset.x > swipeThreshold) {
-              // Dragged Right -> Prev
               if (currentIndex > 0) {
                 setCurrentIndex(currentIndex - 1);
               }
