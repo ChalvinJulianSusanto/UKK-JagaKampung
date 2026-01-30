@@ -1129,18 +1129,18 @@ const ActivityDocumentation = () => {
   }, []);
 
   useEffect(() => {
-    if (docs.length <= 1) return;
+    if (docs.length <= 1 || isHovered) return;
 
-    // Auto slide every 5 seconds (Stop at end)
+    // Auto slide every 5 seconds (Stop at end, paused on hover)
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
         if (prev < docs.length - 1) return prev + 1;
-        return prev; // Stop at last slide
+        return prev;
       });
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length]);
+  }, [docs.length, isHovered]);
 
   const fetchDocumentation = async () => {
     try {
@@ -1195,20 +1195,25 @@ const ActivityDocumentation = () => {
         <motion.div
           className="flex h-full cursor-grab active:cursor-grabbing touch-pan-y"
           animate={{ x: `-${currentIndex * 100}%` }}
-          transition={{ type: "spring", stiffness: 300, damping: 30, mass: 1 }}
+          transition={{
+            type: "spring",
+            stiffness: 260,
+            damping: 20, // Smoother damping
+            mass: 0.5   // Lighter feel
+          }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.1} // More resistance to strict bounds
+          dragElastic={0.2} // More natural resistance
           onDragEnd={(e, { offset, velocity }) => {
-            const swipe = Math.abs(offset.x) * velocity.x;
-            const swipeThreshold = 100; // Lower threshold = easier swiping
-
-            // Standard swipe logic
-            if (offset.x < -50 || (offset.x < 0 && swipe < -swipeThreshold)) {
+            const swipeThreshold = 50; // Simple distance threshold
+            
+            if (offset.x < -swipeThreshold) {
+              // Dragged Left -> Next
               if (currentIndex < docs.length - 1) {
                 setCurrentIndex(currentIndex + 1);
               }
-            } else if (offset.x > 50 || (offset.x > 0 && swipe > swipeThreshold)) {
+            } else if (offset.x > swipeThreshold) {
+              // Dragged Right -> Prev
               if (currentIndex > 0) {
                 setCurrentIndex(currentIndex - 1);
               }
