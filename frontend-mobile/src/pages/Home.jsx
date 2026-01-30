@@ -1122,8 +1122,7 @@ const ActivityDocumentation = () => {
   const [docs, setDocs] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [direction, setDirection] = useState(0); // For slide animation direction
-  const [isHovered, setIsHovered] = useState(false); // For hover state
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     fetchDocumentation();
@@ -1134,11 +1133,12 @@ const ActivityDocumentation = () => {
 
     // Auto slide every 5 seconds
     const interval = setInterval(() => {
-      handleNext();
+      // Auto loop for passive viewing
+      setCurrentIndex((prev) => (prev + 1) % docs.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length, currentIndex]);
+  }, [docs.length]);
 
   const fetchDocumentation = async () => {
     try {
@@ -1159,20 +1159,7 @@ const ActivityDocumentation = () => {
     }
   };
 
-  const handleNext = () => {
-    setDirection(1);
-    setCurrentIndex((prev) => (prev + 1) % docs.length);
-  };
-
-  const handlePrev = () => {
-    setDirection(-1);
-    setCurrentIndex((prev) => (prev - 1 + docs.length) % docs.length);
-  };
-
   const currentDoc = docs[currentIndex];
-
-  if (loading) return null;
-  if (docs.length === 0) return null;
 
   const getPhotoUrl = (photoPath) => {
     if (!photoPath) return null;
@@ -1186,25 +1173,8 @@ const ActivityDocumentation = () => {
     return `${apiBaseUrl}${photoPath}`;
   };
 
-  // Prioritize documentation photo (first one), fall back to main photo
-  const displayPhoto = (currentDoc.documentation && currentDoc.documentation.length > 0)
-    ? getPhotoUrl(currentDoc.documentation[0])
-    : getPhotoUrl(currentDoc.photo);
-
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 0
-    }),
-    center: {
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction) => ({
-      x: direction > 0 ? '-100%' : '100%',
-      opacity: 0
-    })
-  };
+  if (loading) return null;
+  if (docs.length === 0) return null;
 
   return (
     <motion.div
@@ -1220,71 +1190,66 @@ const ActivityDocumentation = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <AnimatePresence initial={false} custom={direction} mode="sync">
-          <motion.img
-            key={currentIndex}
-            src={displayPhoto}
-            alt={currentDoc.title}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 }
-            }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            onDragEnd={(e, { offset, velocity }) => {
-              const swipe = Math.abs(offset.x) * velocity.x;
-              const swipeThreshold = 5000;
-              if (swipe < -swipeThreshold || offset.x < -100) {
-                handleNext();
-              } else if (swipe > swipeThreshold || offset.x > 100) {
-                handlePrev();
+        <motion.div
+          className="flex h-full cursor-grab active:cursor-grabbing touch-pan-y"
+          animate={{ x: `-${currentIndex * 100}%` }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(e, { offset, velocity }) => {
+            const swipe = Math.abs(offset.x) * velocity.x;
+            const swipeThreshold = 500;
+
+            if (offset.x < -50 || (offset.x < 0 && swipe < -swipeThreshold)) {
+              // Dragged Left -> Next
+              if (currentIndex < docs.length - 1) {
+                setCurrentIndex(currentIndex + 1);
               }
-            }}
-            className="w-full h-full object-cover absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
-            style={{ touchAction: 'pan-y' }}
-          />
-        </AnimatePresence>
+            } else if (offset.x > 50 || (offset.x > 0 && swipe > swipeThreshold)) {
+              // Dragged Right -> Prev
+              if (currentIndex > 0) {
+                setCurrentIndex(currentIndex - 1);
+              }
+            }
+          }}
+          style={{ touchAction: 'pan-y' }}
+        >
+          {docs.map((doc, idx) => {
+            // Prioritize documentation photo (first one), fall back to main photo
+            const displayPhoto = (doc.documentation && doc.documentation.length > 0)
+              ? getPhotoUrl(doc.documentation[0])
+              : getPhotoUrl(doc.photo);
+
+            return (
+              <div key={idx} className="min-w-full h-full relative">
+                <img
+                  src={displayPhoto}
+                  alt={doc.title}
+                  className="w-full h-full object-cover pointer-events-none"
+                  draggable="false"
+                />
+              </div>
+            );
+          })}
+        </motion.div>
 
         {/* Overlay - Show only on hover */}
         <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-          <motion.h3
-            key={`title-${currentIndex}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
-            transition={{ delay: 0.1 }}
-            className="text-white font-bold text-lg leading-tight mb-1"
-          >
+          <h3 className="text-white font-bold text-lg leading-tight mb-1">
             {currentDoc.title}
-          </motion.h3>
-          <motion.p
-            key={`date-${currentIndex}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
-            transition={{ delay: 0.15 }}
-            className="text-blue-200 text-sm font-medium"
-          >
+          </h3>
+          <p className="text-blue-200 text-sm font-medium">
             {format(new Date(currentDoc.eventDate), 'dd MMMM yyyy', { locale: id })}
-          </motion.p>
+          </p>
         </div>
-
-        {/* Navigation buttons - left & right */}
-
 
         {/* Indicators - Bottom Center */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
           {docs.map((_, idx) => (
             <button
               key={idx}
-              onClick={() => {
-                setDirection(idx > currentIndex ? 1 : -1);
-                setCurrentIndex(idx);
-              }}
+              onClick={() => setCurrentIndex(idx)}
               className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
                 ? 'w-8 bg-white'
                 : 'w-1.5 bg-white/60 hover:bg-white/80'
@@ -1296,6 +1261,7 @@ const ActivityDocumentation = () => {
     </motion.div>
   );
 };
+
 
 // --- 6. ACTIVITIES SECTION (KEGIATAN RW 01) ---
 const ActivitiesSection = ({ navigate }) => {
