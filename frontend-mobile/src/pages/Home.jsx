@@ -1203,10 +1203,11 @@ const ActivityDocumentation = () => {
             mass: 0.8 // Balanced feel
           }}
           drag="x"
+          // Calculate constraints based on current index to lock movement correctly
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={{
-            left: currentIndex === docs.length - 1 ? 0.2 : 1, // Resist next if last
-            right: currentIndex === 0 ? 0.2 : 1 // Resist prev if first
+            left: currentIndex === docs.length - 1 ? 0.1 : 0.9,
+            right: currentIndex === 0 ? 0.1 : 0.9
           }}
           onDragStart={() => setIsDragging(true)}
           onDragEnd={(e, { offset, velocity }) => {
@@ -1223,7 +1224,7 @@ const ActivityDocumentation = () => {
               }
             }
           }}
-          style={{ touchAction: 'pan-y' }}
+          style={{ width: `${docs.length * 100}%`, display: 'flex' }}
         >
           {docs.map((doc, idx) => {
             // Prioritize documentation photo (first one), fall back to main photo
@@ -1232,7 +1233,11 @@ const ActivityDocumentation = () => {
               : getPhotoUrl(doc.photo);
 
             return (
-              <div key={idx} className="min-w-full h-full relative">
+              <div
+                key={idx}
+                className="h-full relative"
+                style={{ width: `${100 / docs.length}%` }}
+              >
                 <img
                   src={displayPhoto}
                   alt={doc.title}
