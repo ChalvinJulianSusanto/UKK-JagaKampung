@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import {
   Bell,
   Clock,
@@ -997,7 +997,7 @@ const AttendanceRecap = () => {
       className="mb-6"
     >
       {/* Title */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">Rekap Kehadiran</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3">Rekap Jagakampung</h2>
 
       {/* RT Filter Buttons */}
       <div
@@ -1120,37 +1120,22 @@ const AttendanceRecap = () => {
 // --- 5.5 ACTIVITY DOCUMENTATION SLIDER ---
 const ActivityDocumentation = () => {
   const [docs, setDocs] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+
+  const containerRef = useRef(null);
+  const x = useMotionValue(0);
   const isDragging = useRef(false);
 
   useEffect(() => {
     fetchDocumentation();
   }, []);
 
-  useEffect(() => {
-    if (docs.length <= 1) return;
-
-    // Auto slide every 5 seconds (Stop at end, paused on hover/drag)
-    const interval = setInterval(() => {
-      if (isHovered || isDragging.current) return;
-
-      setCurrentIndex((prev) => {
-        if (prev < docs.length - 1) return prev + 1;
-        return prev;
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [docs.length, isHovered]);
-
   const fetchDocumentation = async () => {
     try {
       setLoading(true);
-      // Fetch documentation feed: limit 10, expiry handled by backend (7 days)
       const response = await activitiesAPI.getAll({ isDocumentationFeed: 'true', limit: 10 });
-
       if (response.data && response.data.data) {
         setDocs(response.data.data);
       } else {
@@ -1164,22 +1149,112 @@ const ActivityDocumentation = () => {
     }
   };
 
-  const currentDoc = docs[currentIndex];
-
   const getPhotoUrl = (photoPath) => {
     if (!photoPath) return null;
-    if (photoPath.startsWith('http')) return photoPath;
+    if (photoPath.startsWith('http') || photoPath.startsWith('https')) return photoPath;
+    if (photoPath.startsWith('data:')) return photoPath;
 
     const apiBaseUrl = (import.meta.env.VITE_API_URL ||
       (window.location.hostname.includes('vercel.app')
         ? 'https://ukk-jagakampung.onrender.com/api'
         : 'http://localhost:5000/api')).replace('/api', '');
 
-    return `${apiBaseUrl}${photoPath}`;
+    let normalizedPath = photoPath.replace(/\\/g, '/');
+    if (!normalizedPath.startsWith('/')) {
+      normalizedPath = `/${normalizedPath}`;
+    }
+    return `${apiBaseUrl}${normalizedPath}`;
+  };
+
+  // Logic to move slider programmatically
+  const slideTo = (direction) => {
+    if (!containerRef.current) return;
+    const width = containerRef.current.offsetWidth;
+
+    // Animate x to -width (next) or width (prev)
+    animate(x, -direction * width, {
+      type: "spring", stiffness: 300, damping: 30
+    }).then(() => {
+      // Reset x to 0 and update index instantly to create infinite loop illusion
+      x.set(0);
+      setIndex((prev) => {
+        const count = docs.length;
+        if (count === 0) return 0;
+        return (prev + direction + count) % count;
+      });
+    });
+  };
+
+  // Auto slide
+  useEffect(() => {
+    if (docs.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (!isHovered && !isDragging.current) {
+        slideTo(1);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [docs.length, isHovered]); // dependency on docs.length is enough, index handled internally or by state updater
+
+  // Drag End Handler
+  const handleDragEnd = (e, { offset, velocity }) => {
+    isDragging.current = false;
+    if (!containerRef.current) return;
+
+    const width = containerRef.current.offsetWidth;
+    const swipe = offset.x;
+    const threshold = width * 0.25; // Swipe at least 25% to change
+
+    if (swipe < -threshold) {
+      // Swipe Left -> Next
+      slideTo(1);
+    } else if (swipe > threshold) {
+      // Swipe Right -> Prev
+      slideTo(-1);
+    } else {
+      // Snap back to 0
+      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+    }
   };
 
   if (loading) return null;
   if (docs.length === 0) return null;
+
+  // Prepare 3 images: Prev, Current, Next
+  const count = docs.length;
+  // If only 1 item, we can't really slide, just show it.
+  // But for logic consistency we duplicate pointers if needed, or just handle 1 case separately.
+  // The logic (prev+count)%count handles standard wrapping.
+
+  const prevIndex = (index - 1 + count) % count;
+  const nextIndex = (index + 1) % count;
+
+  const renderSlide = (docIndex, positionOffset) => {
+    const doc = docs[docIndex];
+    const displayPhoto = (doc?.documentation && doc.documentation.length > 0)
+      ? getPhotoUrl(doc.documentation[0])
+      : getPhotoUrl(doc?.photo);
+
+    return (
+      <div
+        className="absolute top-0 w-full h-full"
+        style={{ left: `${positionOffset * 100}%` }}
+        key={`${docIndex}-${positionOffset}`}
+      >
+        <img
+          src={displayPhoto}
+          alt={doc?.title}
+          className="w-full h-full object-cover pointer-events-none"
+          draggable="false"
+        />
+        {/* Helper text for debugging if needed, remove in prod */}
+      </div>
+    );
+  };
+
+  const currentDoc = docs[index];
 
   return (
     <motion.div
@@ -1188,69 +1263,35 @@ const ActivityDocumentation = () => {
       transition={{ duration: 0.5 }}
       className="mb-6 -mx-5"
     >
-      <h2 className="text-lg font-semibold text-gray-800 mb-3 px-5">Kegiatan RW 01</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3 px-5">Rekap Kegiatan</h2>
 
       <div
+        ref={containerRef}
         className="relative w-full aspect-video overflow-hidden bg-gray-200 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Draggable Track */}
         <motion.div
-          className="flex h-full cursor-grab active:cursor-grabbing touch-pan-y"
-          animate={{ x: `-${currentIndex * 100}%` }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 30,
-            mass: 0.8 // Balanced feel
-          }}
+          className="relative w-full h-full cursor-grab active:cursor-grabbing touch-pan-y"
+          style={{ x }}
           drag="x"
-          // Calculate constraints based on current index to lock movement correctly
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.7} // Constant elasticity for consistent feel
-          onDragStart={() => {
-            isDragging.current = true;
-          }}
-          onDragEnd={(e, { offset, velocity }) => {
-            isDragging.current = false;
-            const swipeThreshold = 50;
-
-            if (offset.x < -swipeThreshold) {
-              if (currentIndex < docs.length - 1) {
-                setCurrentIndex(currentIndex + 1);
-              }
-            } else if (offset.x > swipeThreshold) {
-              if (currentIndex > 0) {
-                setCurrentIndex(currentIndex - 1);
-              }
-            }
-          }}
-          style={{ width: `${docs.length * 100}%`, display: 'flex' }}
+          dragMomentum={false} // Disable momentum so we control the "landing"
+          onDragStart={() => { isDragging.current = true; }}
+          onDragEnd={handleDragEnd}
         >
-          {docs.map((doc, idx) => {
-            // Prioritize documentation photo (first one), fall back to main photo
-            const displayPhoto = (doc.documentation && doc.documentation.length > 0)
-              ? getPhotoUrl(doc.documentation[0])
-              : getPhotoUrl(doc.photo);
-
-            return (
-              <div
-                key={idx}
-                className="h-full relative"
-                style={{ width: `${100 / docs.length}%` }}
-              >
-                <img
-                  src={displayPhoto}
-                  alt={doc.title}
-                  className="w-full h-full object-cover pointer-events-none"
-                  draggable="false"
-                />
-              </div>
-            );
-          })}
+          {docs.length > 1 ? (
+            <>
+              {renderSlide(prevIndex, -1)}
+              {renderSlide(index, 0)}
+              {renderSlide(nextIndex, 1)}
+            </>
+          ) : (
+            renderSlide(0, 0)
+          )}
         </motion.div>
 
-        {/* Overlay - Show only on hover */}
+        {/* Overlay */}
         <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           <h3 className="text-white font-bold text-lg leading-tight mb-1">
             {currentDoc.title}
@@ -1260,13 +1301,22 @@ const ActivityDocumentation = () => {
           </p>
         </div>
 
-        {/* Indicators - Bottom Center */}
+        {/* Indicators */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
           {docs.map((_, idx) => (
             <button
               key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
+              onClick={() => {
+                // Determine simple direction
+                const diff = idx - index;
+                if (diff === 0) return;
+                // For simple indicator jump, just next/prev logic might be too complex for this simplified view.
+                // Just standard setIndex is simpler, but loses animation continuity for jumps > 1.
+                // Given 5s timeout, simple jump is acceptable.
+                setIndex(idx);
+                x.set(0);
+              }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${idx === index
                 ? 'w-8 bg-white'
                 : 'w-1.5 bg-white/60 hover:bg-white/80'
                 }`}
@@ -1393,7 +1443,7 @@ const ActivitiesSection = ({ navigate }) => {
         className="mb-6"
       >
         {/* Header */}
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Informasi kegiatan RW-01</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">Informasi Kegiatan</h2>
 
         {/* RT Filter Tabs */}
         <div
