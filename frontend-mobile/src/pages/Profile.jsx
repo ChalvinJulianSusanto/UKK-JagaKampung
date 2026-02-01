@@ -462,7 +462,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error(error.response?.data?.message || t.updateFailed);
+      toast.error(error.response?.data?.message || t('profile.updateFailed'));
     } finally {
       setLoading(false);
     }
@@ -719,13 +719,13 @@ const Profile = () => {
                   <div className="space-y-3">
                     {/* Phone Number */}
                     <div className="border-b border-slate-100 pb-3">
-                      <p className="text-xs text-slate-400 mb-1">{t.phoneNumber}</p>
+                      <p className="text-xs text-slate-400 mb-1">{t('profile.phoneNumber')}</p>
                       <p className="text-sm font-medium text-slate-700">{user?.phone || '-'}</p>
                     </div>
 
                     {/* RT Location */}
                     <div className="pb-1">
-                      <p className="text-xs text-slate-400 mb-1">{t.rtLocation}</p>
+                      <p className="text-xs text-slate-400 mb-1">{t('profile.rtLocation')}</p>
                       <p className="text-sm font-medium text-slate-700">RT {user?.rt || '-'}</p>
                     </div>
                   </div>
@@ -1009,7 +1009,7 @@ const Profile = () => {
                     }}
                   />
                   <span className={`text-base ${user?.photo ? 'text-red-600' : 'text-gray-400'}`}>
-                    {t.removePhoto}
+                    {t('profile.removePhoto')}
                   </span>
                 </button>
               </div>
