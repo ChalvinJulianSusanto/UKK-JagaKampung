@@ -5,6 +5,7 @@ export * as attendancesAPI from './attendances';
 export * as dashboardAPI from './dashboard';
 export * as notificationsAPI from './notifications';
 export * as activitiesAPI from './activities';
+export * as financeAPI from './finance';
 
 // Export client for custom requests
 export { default as client } from './client';

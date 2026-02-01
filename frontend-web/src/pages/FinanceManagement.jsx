@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, ChevronDown, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronDown, Calendar, DollarSign, FileText, FileSpreadsheet } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { iuranAPI, budgetAPI } from '../api/finance';
 import { incomeAPI } from '../api/income';
@@ -14,6 +14,9 @@ import toast from 'react-hot-toast';
 // Import icons
 import filterIcon from '../assets/filter.png';
 import iconMoney from '../assets/money.png';
+import excelIcon from '../assets/excel.png';
+import pdfIcon from '../assets/pdf.png';
+import { exportToExcel, exportToPDF } from '../utils/exportHelpers';
 
 const RT_OPTIONS = ['01', '02', '03', '04', '05', '06'];
 const RT_OPTIONS_WITH_RW = ['01', '02', '03', '04', '05', '06', 'RW-01'];
@@ -388,6 +391,96 @@ const FinanceManagement = () => {
         return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     };
 
+    // Export Handlers
+    const handleExportIuran = (type) => {
+        if (iuranData.length === 0) {
+            toast.error('Tidak ada data iuran untuk diekspor');
+            return;
+        }
+
+        const dataToExport = iuranData.map((item, index) => ({
+            No: index + 1,
+            Periode: getMonthName(item.month),
+            RT: item.rt,
+            Target: item.targetAmount,
+            Terkumpul: item.collectedAmount,
+            'Status Warga': `${item.paidResidents}/${item.totalResidents}`,
+            Progress: `${((item.collectedAmount / item.targetAmount) * 100).toFixed(1)}%`
+        }));
+
+        if (type === 'excel') {
+            exportToExcel(dataToExport, `Laporan_Iuran_${iuranFilters.year}`, 'Iuran Bulanan');
+        } else {
+            const totalTerkumpul = iuranData.reduce((sum, item) => sum + item.collectedAmount, 0);
+
+            exportToPDF({
+                title: 'Laporan Iuran Bulanan',
+                subtitle: `Periode Tahun ${iuranFilters.year}`,
+                headers: ['No', 'Periode', 'RT', 'Target', 'Terkumpul', 'Status Warga', 'Progress'],
+                data: dataToExport.map(item => [
+                    item.No,
+                    item.Periode,
+                    item.RT,
+                    formatCurrency(item.Target),
+                    formatCurrency(item.Terkumpul),
+                    item['Status Warga'],
+                    item.Progress
+                ]),
+                fileName: `Laporan_Iuran_${iuranFilters.year}`,
+                summary: { label: 'Total Terkumpul', value: formatCurrency(totalTerkumpul) }
+            });
+        }
+        toast.success(`Berhasil mengekspor Laporan Iuran (${type.toUpperCase()})`);
+    };
+
+    const handleExportBudget = (type) => {
+        if (budgetData.length === 0) {
+            toast.error('Tidak ada data anggaran untuk diekspor');
+            return;
+        }
+
+        const dataToExport = budgetData.map((item, index) => {
+            const usage = ((item.spentAmount / item.allocatedAmount) * 100).toFixed(1);
+            const remaining = item.allocatedAmount - item.spentAmount;
+            return {
+                No: index + 1,
+                Tahun: item.year,
+                RT: item.rt === 'RW-01' ? 'RW 01' : `RT ${item.rt}`,
+                Kategori: item.category,
+                Alokasi: item.allocatedAmount,
+                Terpakai: item.spentAmount,
+                Sisa: remaining,
+                Penggunaan: `${usage}%`
+            };
+        });
+
+        if (type === 'excel') {
+            exportToExcel(dataToExport, `Laporan_Anggaran_${budgetFilters.year}`, 'Anggaran');
+        } else {
+            const totalAlokasi = budgetData.reduce((sum, item) => sum + item.allocatedAmount, 0);
+            const totalTerpakai = budgetData.reduce((sum, item) => sum + item.spentAmount, 0);
+
+            exportToPDF({
+                title: 'Laporan Anggaran',
+                subtitle: `Periode Tahun ${budgetFilters.year}`,
+                headers: ['No', 'Tahun', 'RT', 'Kategori', 'Alokasi', 'Terpakai', 'Sisa', 'Penggunaan'],
+                data: dataToExport.map(item => [
+                    item.No,
+                    item.Tahun,
+                    item.RT,
+                    item.Kategori,
+                    formatCurrency(item.Alokasi),
+                    formatCurrency(item.Terpakai),
+                    formatCurrency(item.Sisa),
+                    item.Penggunaan
+                ]),
+                fileName: `Laporan_Anggaran_${budgetFilters.year}`,
+                summary: { label: 'Total Terpakai', value: `${formatCurrency(totalTerpakai)} (dari ${formatCurrency(totalAlokasi)})` }
+            });
+        }
+        toast.success(`Berhasil mengekspor Laporan Anggaran (${type.toUpperCase()})`);
+    };
+
     if (loading && (iuranData.length === 0 && budgetData.length === 0)) {
         return <Loading fullScreen />;
     }
@@ -481,6 +574,24 @@ const FinanceManagement = () => {
                                 </AnimatePresence>
                             </div>
 
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleExportIuran('excel')}
+                                    className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm font-medium"
+                                    title="Export Excel"
+                                >
+                                    <img src={excelIcon} alt="Excel" className="w-5 h-5 brightness-0 invert" />
+                                    <span>Excel</span>
+                                </button>
+                                <button
+                                    onClick={() => handleExportIuran('pdf')}
+                                    className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm font-medium"
+                                    title="Export PDF"
+                                >
+                                    <img src={pdfIcon} alt="PDF" className="w-5 h-5 brightness-0 invert" />
+                                    <span>PDF</span>
+                                </button>
+                            </div>
                             <Button
                                 onClick={() => {
                                     resetIuranForm();
@@ -629,6 +740,24 @@ const FinanceManagement = () => {
                                 </AnimatePresence>
                             </div>
 
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleExportBudget('excel')}
+                                    className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm font-medium"
+                                    title="Export Excel"
+                                >
+                                    <img src={excelIcon} alt="Excel" className="w-5 h-5 brightness-0 invert" />
+                                    <span>Excel</span>
+                                </button>
+                                <button
+                                    onClick={() => handleExportBudget('pdf')}
+                                    className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm font-medium"
+                                    title="Export PDF"
+                                >
+                                    <img src={pdfIcon} alt="PDF" className="w-5 h-5 brightness-0 invert" />
+                                    <span>PDF</span>
+                                </button>
+                            </div>
                             <Button
                                 onClick={() => {
                                     resetBudgetForm();

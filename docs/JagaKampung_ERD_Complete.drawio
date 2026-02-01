@@ -1,13 +1,13 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.0 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.3.0">
   <diagram id="erd" name="ERD JagaKampung">
-    <mxGraphModel dx="2246" dy="1497" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3500" pageHeight="2800" math="0" shadow="0">
+    <mxGraphModel dx="1965" dy="1310" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3500" pageHeight="2800" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;labelBackgroundColor=none;" value="Entity Relationship Diagram - Sistem JagaKampung" vertex="1">
           <mxGeometry height="40" width="800" x="1000" y="50" as="geometry" />
         </mxCell>
-        <mxCell id="user" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;labelBackgroundColor=none;" value="User" vertex="1">
+        <mxCell id="user" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;labelBackgroundColor=none;" value="Users" vertex="1">
           <mxGeometry height="100" width="200" x="1500" y="1200" as="geometry" />
         </mxCell>
         <mxCell id="user-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -76,7 +76,7 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-11" edge="1" parent="1" source="user" style="labelBackgroundColor=none;fontColor=default;" target="user-authProvider">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="notif" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Notification" vertex="1">
+        <mxCell id="notif" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Notifications" vertex="1">
           <mxGeometry height="100" width="200" x="500" y="500" as="geometry" />
         </mxCell>
         <mxCell id="notif-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -121,7 +121,7 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-18" edge="1" parent="1" source="notif" style="labelBackgroundColor=none;fontColor=default;" target="notif-metadata">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="sched" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Schedule" vertex="1">
+        <mxCell id="sched" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Schedules" vertex="1">
           <mxGeometry height="100" width="200" x="1100" y="500" as="geometry" />
         </mxCell>
         <mxCell id="sched-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -136,8 +136,29 @@
         <mxCell id="sched-rt" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="rt" vertex="1">
           <mxGeometry height="45" width="80" x="1300" y="400" as="geometry" />
         </mxCell>
-        <mxCell id="sched-entries" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="scheduleEntries" vertex="1">
+        <mxCell id="sched-entries" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="entries" vertex="1">
           <mxGeometry height="45" width="110" x="1350" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="att-location" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="location" vertex="1">
+          <mxGeometry height="45" width="85" x="1800" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="att-approvedBy" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="approvedBy" vertex="1">
+          <mxGeometry height="45" width="90" x="1800" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="att-approvedAt" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="approvedAt" vertex="1">
+          <mxGeometry height="45" width="90" x="1880" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-att-appBy" edge="1" parent="1" source="att" style="labelBackgroundColor=none;fontColor=default;" target="att-approvedBy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-att-appAt" edge="1" parent="1" source="att" style="labelBackgroundColor=none;fontColor=default;" target="att-approvedAt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5-rt" edge="1" parent="1" style="labelBackgroundColor=none;fontColor=default;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="331.11180681479755" y="1000" as="sourcePoint" />
+            <mxPoint x="331.22958688140784" y="1001.0793573710789" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="xaboK-MJbhOAROnIxX7b-19" edge="1" parent="1" source="sched" style="labelBackgroundColor=none;fontColor=default;" target="sched-id">
           <mxGeometry relative="1" as="geometry" />
@@ -154,7 +175,7 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-23" edge="1" parent="1" source="sched" style="labelBackgroundColor=none;fontColor=default;" target="sched-entries">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="att" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Attendance" vertex="1">
+        <mxCell id="att" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Attendances" vertex="1">
           <mxGeometry height="100" width="200" x="1900" y="500" as="geometry" />
         </mxCell>
         <mxCell id="att-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -183,9 +204,6 @@
         </mxCell>
         <mxCell id="att-approved" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="approved" vertex="1">
           <mxGeometry height="45" width="85" x="1920" y="665" as="geometry" />
-        </mxCell>
-        <mxCell id="att-location" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;labelBackgroundColor=none;" value="location" vertex="1">
-          <mxGeometry height="45" width="85" x="1800" y="620" as="geometry" />
         </mxCell>
         <mxCell id="xaboK-MJbhOAROnIxX7b-24" edge="1" parent="1" source="att" style="labelBackgroundColor=none;fontColor=default;" target="att-id">
           <mxGeometry relative="1" as="geometry" />
@@ -217,7 +235,7 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-33" edge="1" parent="1" source="att" style="labelBackgroundColor=none;fontColor=default;" target="att-location">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="recap" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="AttendanceRecap" vertex="1">
+        <mxCell id="recap" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="AttendanceRecaps" vertex="1">
           <mxGeometry height="100" width="200" x="2500" y="1200" as="geometry" />
         </mxCell>
         <mxCell id="recap-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -256,7 +274,7 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-39" edge="1" parent="1" source="recap" style="labelBackgroundColor=none;fontColor=default;" target="recap-photo">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="act" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Activity" vertex="1">
+        <mxCell id="act" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Activities" vertex="1">
           <mxGeometry height="100" width="200" x="500" y="1900" as="geometry" />
         </mxCell>
         <mxCell id="act-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -325,8 +343,8 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-50" edge="1" parent="1" source="act" style="labelBackgroundColor=none;fontColor=default;" target="act-category">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="bud" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Budget" vertex="1">
-          <mxGeometry height="100" width="200" x="1100" y="1900" as="geometry" />
+        <mxCell id="bud" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Budgets" vertex="1">
+          <mxGeometry height="100" width="200" x="1101" y="1900" as="geometry" />
         </mxCell>
         <mxCell id="bud-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
           <mxGeometry height="45" width="80" x="1000" y="1800" as="geometry" />
@@ -370,7 +388,7 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-57" edge="1" parent="1" source="bud" style="labelBackgroundColor=none;fontColor=default;" target="bud-description">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="iur" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Iuran" vertex="1">
+        <mxCell id="iur" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Iurans" vertex="1">
           <mxGeometry height="100" width="200" x="1900" y="1900" as="geometry" />
         </mxCell>
         <mxCell id="iur-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -427,7 +445,7 @@
         <mxCell id="xaboK-MJbhOAROnIxX7b-66" edge="1" parent="1" source="iur" style="labelBackgroundColor=none;fontColor=default;" target="iur-notes">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="inc" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Income" vertex="1">
+        <mxCell id="inc" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=15;strokeWidth=2;labelBackgroundColor=none;" value="Incomes" vertex="1">
           <mxGeometry height="100" width="200" x="500" y="1200" as="geometry" />
         </mxCell>
         <mxCell id="inc-id" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=4;strokeWidth=2;fontSize=12;labelBackgroundColor=none;" value="_id" vertex="1">
@@ -502,7 +520,7 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="xaboK-MJbhOAROnIxX7b-78" edge="1" parent="1" source="sched" style="strokeWidth=2;fontSize=14;fontStyle=1;labelBackgroundColor=none;fontColor=default;strokeColor=default;" target="rel-sched" value="N">
+        <mxCell id="xaboK-MJbhOAROnIxX7b-78" edge="1" parent="1" source="sched" style="strokeWidth=2;fontSize=14;fontStyle=1;labelBackgroundColor=none;fontColor=default;" target="rel-sched" value="N">
           <mxGeometry relative="1" x="0.0691" y="8" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>

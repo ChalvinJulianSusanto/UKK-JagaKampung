@@ -34,13 +34,14 @@ import ngananIcon from '../assets/nganan.png';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 // Gunakan authAPI untuk update profil, dashboardAPI untuk statistik
-import { attendancesAPI, authAPI, notificationsAPI, schedulesAPI, activitiesAPI } from '../api';
+import { attendancesAPI, authAPI, notificationsAPI, schedulesAPI, activitiesAPI, financeAPI } from '../api';
 import { getTodayPartner } from '../api/schedules';
 import { Button, Badge, Loading, EmptyState, Modal } from '../components/common';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 // --- HELPER COMPONENTS ---
+import FinancialReportsSection from '../components/FinancialReportsSection';
 
 const MaskedIcon = ({ src, color = '#FFFFFF', size = 20, alt = '' }) => {
   const style = {
@@ -76,6 +77,7 @@ const getTimeBasedGreeting = (language = 'id') => {
 
 // --- ANIMASI TEKS ---
 const AnimatedInfoText = () => {
+  const { t } = useLanguage();
   const [showDate, setShowDate] = useState(true);
 
   useEffect(() => {
@@ -86,7 +88,7 @@ const AnimatedInfoText = () => {
   }, []);
 
   const dateText = format(new Date(), 'EEEE, dd MMMM yyyy', { locale: id });
-  const staticText = "JagaKampung RW-01";
+  const staticText = t('home.rwText');
 
   return (
     <div className="h-6 overflow-hidden relative flex items-center">
@@ -107,6 +109,7 @@ const AnimatedInfoText = () => {
 };
 
 const AnimatedNavbarText = ({ userRt }) => {
+  const { t } = useLanguage();
   const [showRt, setShowRt] = useState(true);
 
   useEffect(() => {
@@ -116,8 +119,9 @@ const AnimatedNavbarText = ({ userRt }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const rtText = userRt || 'RT 05';
-  const rwText = 'RW 01';
+  // Assuming userRt is just the number/identifier "05" etc.
+  // If it's missing, default to "05" (matching original fallback logic roughly)
+  const rtValue = userRt || '05';
 
   return (
     <div className="h-5 overflow-hidden relative flex items-center justify-start min-w-[50px]">
@@ -129,7 +133,7 @@ const AnimatedNavbarText = ({ userRt }) => {
           exit={{ y: -20, opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         >
-          {showRt ? <span>RT {rtText}</span> : <span>{rwText}</span>}
+          {showRt ? <span>{t('home.rt')} {rtValue}</span> : <span>{t('home.rw')} 01</span>}
         </motion.div>
       </AnimatePresence>
     </div>
@@ -167,9 +171,15 @@ const ProfileHeader = ({ user, navigate, unreadCount = 0, t }) => {
       const symbol = photoUrl.includes('?') ? '&' : '?';
       setDisplayImage(`${photoUrl}${symbol}t=${timestamp}`);
     }
-    // Update greeting based on current language
-    setGreeting(getTimeBasedGreeting(currentLanguage || 'id'));
-  }, [user?.photo, currentLanguage]);
+
+    // Update greeting based on time
+    const hour = new Date().getHours();
+    let timeKey = 'morning';
+    if (hour >= 12 && hour < 15) timeKey = 'afternoon';
+    else if (hour >= 15) timeKey = 'evening';
+
+    setGreeting(t(`home.greeting.${timeKey}`));
+  }, [user?.photo, currentLanguage, t]);
 
   // Effect: Body scroll lock for modal
   useEffect(() => {
@@ -784,17 +794,14 @@ const AttendanceCalendar = ({ navigate }) => {
         {/* Title and Link at Top Inside Blue Container */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-
-
-
-            <h2 className="text-base font-bold text-gray-800">Kalender Kehadiranmu</h2>
+            <h2 className="text-base font-bold text-gray-800">{t('home.attendanceCalendarTitle')}</h2>
           </div>
           {/* See More Link */}
           <button
             onClick={() => navigate('/attendance-calendar')}
             className="text-sm text-blue-600 font-medium hover:text-blue-700"
           >
-            Selengkapnya
+            {t('home.seeMore')}
           </button>
         </div>
         {/* White Calendar Card */}
@@ -913,7 +920,7 @@ const AttendanceCalendar = ({ navigate }) => {
           onClick={() => navigate('/schedule')}
           className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-between shadow-md"
         >
-          <span>Lihat Jadwal Sekarang</span>
+          <span>{t('home.checkScheduleNow')}</span>
           <MaskedIcon src={ngananIcon} color="#FFFFFF" size={20} alt="Next" />
         </button>
       </div>
@@ -924,10 +931,11 @@ const AttendanceCalendar = ({ navigate }) => {
 
 // --- 5. ATTENDANCE RECAP CARD ---
 const AttendanceRecap = () => {
+  const { t } = useLanguage();
   const [selectedRT, setSelectedRT] = useState('all');
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const rtOptions = ['Semua RT', 'RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06'];
+  const rtOptions = [t('home.allRT'), 'RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06'];
 
   useEffect(() => {
     fetchRecentRecaps();
@@ -997,7 +1005,7 @@ const AttendanceRecap = () => {
       className="mb-6"
     >
       {/* Title */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">Rekap Jagakampung</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3">{t('home.recapTitle')}</h2>
 
       {/* RT Filter Buttons */}
       <div
@@ -1092,11 +1100,11 @@ const AttendanceRecap = () => {
               <div className="p-4">
                 <div className="space-y-2">
                   <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Petugas Jaga</p>
+                    <p className="text-xs text-gray-500 mb-0.5">{t('home.guards')}</p>
                     <p className="font-semibold text-sm text-gray-800">{item.guards.join(', ')}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Waktu</p>
+                    <p className="text-xs text-gray-500 mb-0.5">{t('common.time')}</p>
                     <p className="font-semibold text-sm text-blue-600">{item.time}</p>
                   </div>
                 </div>
@@ -1108,8 +1116,8 @@ const AttendanceRecap = () => {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <Clock className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500 font-medium">Belum ada data kehadiran</p>
-            <p className="text-gray-400 text-sm mt-1">untuk {selectedRT === 'all' ? 'semua RT' : selectedRT}</p>
+            <p className="text-gray-500 font-medium">{t('home.noAttendanceData')}</p>
+            <p className="text-gray-400 text-sm mt-1">{t('home.for')} {selectedRT === 'all' ? t('home.allRT') : selectedRT}</p>
           </div>
         )}
       </div>
@@ -1119,33 +1127,40 @@ const AttendanceRecap = () => {
 
 // --- 5.5 ACTIVITY DOCUMENTATION SLIDER ---
 const ActivityDocumentation = () => {
+  const { t } = useLanguage();
   const [docs, setDocs] = useState([]);
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Gunakan ref untuk melacak state mounted agar aman saat async
+  const isMounted = useRef(true);
   const containerRef = useRef(null);
   const x = useMotionValue(0);
   const isDragging = useRef(false);
 
   useEffect(() => {
+    isMounted.current = true;
     fetchDocumentation();
+    return () => { isMounted.current = false; };
   }, []);
 
   const fetchDocumentation = async () => {
     try {
       setLoading(true);
       const response = await activitiesAPI.getAll({ isDocumentationFeed: 'true', limit: 10 });
-      if (response.data && response.data.data) {
-        setDocs(response.data.data);
-      } else {
-        setDocs([]);
+      if (isMounted.current) {
+        if (response.data && response.data.data) {
+          setDocs(response.data.data);
+        } else {
+          setDocs([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching documentation:', error);
-      setDocs([]);
+      if (isMounted.current) setDocs([]);
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
@@ -1154,6 +1169,7 @@ const ActivityDocumentation = () => {
     if (photoPath.startsWith('http') || photoPath.startsWith('https')) return photoPath;
     if (photoPath.startsWith('data:')) return photoPath;
 
+    // Pastikan environment variables terbaca dengan benar
     const apiBaseUrl = (import.meta.env.VITE_API_URL ||
       (window.location.hostname.includes('vercel.app')
         ? 'https://ukk-jagakampung.onrender.com/api'
@@ -1175,11 +1191,15 @@ const ActivityDocumentation = () => {
     animate(x, -direction * width, {
       type: "spring", stiffness: 300, damping: 30
     }).then(() => {
+      // Handle Component Unmount safety
+      if (!isMounted.current) return;
+
       // Reset x to 0 and update index instantly to create infinite loop illusion
       x.set(0);
       setIndex((prev) => {
         const count = docs.length;
         if (count === 0) return 0;
+        // Ensure accurate modulo for negative numbers
         return (prev + direction + count) % count;
       });
     });
@@ -1196,12 +1216,15 @@ const ActivityDocumentation = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length, isHovered]); // dependency on docs.length is enough, index handled internally or by state updater
+  }, [docs.length, isHovered]);
 
   // Drag End Handler
   const handleDragEnd = (e, { offset, velocity }) => {
     isDragging.current = false;
-    if (!containerRef.current) return;
+    if (!containerRef.current || docs.length <= 1) {
+      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+      return;
+    }
 
     const width = containerRef.current.offsetWidth;
     const swipe = offset.x;
@@ -1222,34 +1245,48 @@ const ActivityDocumentation = () => {
   if (loading) return null;
   if (docs.length === 0) return null;
 
-  // Prepare 3 images: Prev, Current, Next
   const count = docs.length;
-  // If only 1 item, we can't really slide, just show it.
-  // But for logic consistency we duplicate pointers if needed, or just handle 1 case separately.
-  // The logic (prev+count)%count handles standard wrapping.
-
+  // Calculate indices safely
   const prevIndex = (index - 1 + count) % count;
   const nextIndex = (index + 1) % count;
 
   const renderSlide = (docIndex, positionOffset) => {
     const doc = docs[docIndex];
-    const displayPhoto = (doc?.documentation && doc.documentation.length > 0)
+    if (!doc) return null; // Safety check
+
+    const displayPhoto = (doc.documentation && doc.documentation.length > 0)
       ? getPhotoUrl(doc.documentation[0])
-      : getPhotoUrl(doc?.photo);
+      : getPhotoUrl(doc.photo);
 
     return (
       <div
-        className="absolute top-0 w-full h-full"
+        className="absolute top-0 w-full h-full bg-gray-200"
         style={{ left: `${positionOffset * 100}%` }}
-        key={`${docIndex}-${positionOffset}`}
+        // Key logic: Using docIndex prevents component remounting if we just shift position.
+        // We use positionOffset in key to differentiate the 3 rendered slides in the DOM.
+        key={`slide-${docIndex}-${positionOffset}`}
       >
-        <img
-          src={displayPhoto}
-          alt={doc?.title}
-          className="w-full h-full object-cover pointer-events-none"
-          draggable="false"
-        />
-        {/* Helper text for debugging if needed, remove in prod */}
+        {displayPhoto ? (
+          <img
+            src={displayPhoto}
+            alt={doc.title || 'Dokumentasi'}
+            className="w-full h-full object-cover pointer-events-none select-none"
+            draggable="false"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              // Show fallback if text sibling exists or just hide
+              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+
+        {/* Fallback Only if no photo or error */}
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400"
+          style={{ display: displayPhoto ? 'none' : 'flex' }}
+        >
+          <MaskedIcon src={galleryIcon} size={32} color="#9CA3AF" alt="No Image" />
+        </div>
       </div>
     );
   };
@@ -1263,7 +1300,7 @@ const ActivityDocumentation = () => {
       transition={{ duration: 0.5 }}
       className="mb-6 -mx-5"
     >
-      <h2 className="text-lg font-semibold text-gray-800 mb-3 px-5">Rekap Kegiatan</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3 px-5">{t('home.activityRecapTitle')}</h2>
 
       <div
         ref={containerRef}
@@ -1275,8 +1312,9 @@ const ActivityDocumentation = () => {
         <motion.div
           className="relative w-full h-full cursor-grab active:cursor-grabbing touch-pan-y"
           style={{ x }}
-          drag="x"
-          dragMomentum={false} // Disable momentum so we control the "landing"
+          drag={docs.length > 1 ? "x" : false} // Disable drag if only 1 item
+          dragConstraints={{ left: 0, right: 0 }} // Infinite slider doesn't need hard constraints, but this helps snap back logic
+          dragElastic={0.2}
           onDragStart={() => { isDragging.current = true; }}
           onDragEnd={handleDragEnd}
         >
@@ -1291,38 +1329,38 @@ const ActivityDocumentation = () => {
           )}
         </motion.div>
 
-        {/* Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-          <h3 className="text-white font-bold text-lg leading-tight mb-1">
-            {currentDoc.title}
-          </h3>
-          <p className="text-blue-200 text-sm font-medium">
-            {format(new Date(currentDoc.eventDate), 'dd MMMM yyyy', { locale: id })}
-          </p>
-        </div>
+        {/* Overlay Info */}
+        {currentDoc && (
+          <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+            <h3 className="text-white font-bold text-lg leading-tight mb-1 line-clamp-2">
+              {currentDoc.title}
+            </h3>
+            <p className="text-blue-200 text-sm font-medium">
+              {currentDoc.eventDate ? format(new Date(currentDoc.eventDate), 'dd MMMM yyyy', { locale: id }) : '-'}
+            </p>
+          </div>
+        )}
 
         {/* Indicators */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-          {docs.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                // Determine simple direction
-                const diff = idx - index;
-                if (diff === 0) return;
-                // For simple indicator jump, just next/prev logic might be too complex for this simplified view.
-                // Just standard setIndex is simpler, but loses animation continuity for jumps > 1.
-                // Given 5s timeout, simple jump is acceptable.
-                setIndex(idx);
-                x.set(0);
-              }}
-              className={`h-1.5 rounded-full transition-all duration-300 ${idx === index
-                ? 'w-8 bg-white'
-                : 'w-1.5 bg-white/60 hover:bg-white/80'
-                }`}
-            />
-          ))}
-        </div>
+        {docs.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 pointer-events-auto">
+            {docs.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent drag triggering
+                  setIndex(idx);
+                  x.set(0);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${idx === index
+                  ? 'w-8 bg-white'
+                  : 'w-1.5 bg-white/60 hover:bg-white/80'
+                  }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -1331,6 +1369,7 @@ const ActivityDocumentation = () => {
 
 // --- 6. ACTIVITIES SECTION (KEGIATAN RW 01) ---
 const ActivitiesSection = ({ navigate }) => {
+  const { t } = useLanguage();
   const [selectedRT, setSelectedRT] = useState('RW-01');
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1379,9 +1418,9 @@ const ActivitiesSection = ({ navigate }) => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) return null; // Don't show for past events
-    if (diffDays === 0) return 'Hari ini';
-    if (diffDays === 1) return 'Besok';
-    return `${diffDays} hari lagi`;
+    if (diffDays === 0) return t('home.today');
+    if (diffDays === 1) return t('home.tomorrow');
+    return `${diffDays} ${t('home.daysLeft')}`;
   };
 
   const formatDate = (dateString) => {
@@ -1411,9 +1450,9 @@ const ActivitiesSection = ({ navigate }) => {
 
   const getStatusConfig = (status) => {
     const statusMap = {
-      upcoming: { label: 'Akan Datang', bg: 'bg-blue-500', text: 'text-white' },
-      ongoing: { label: 'Berlangsung', bg: 'bg-green-500', text: 'text-white' },
-      completed: { label: 'Selesai', bg: 'bg-gray-500', text: 'text-white' }
+      upcoming: { label: t('home.statusUpcoming'), bg: 'bg-blue-500', text: 'text-white' },
+      ongoing: { label: t('home.statusOngoing'), bg: 'bg-green-500', text: 'text-white' },
+      completed: { label: t('home.statusCompleted'), bg: 'bg-gray-500', text: 'text-white' }
     };
     return statusMap[status] || statusMap.upcoming;
   };
@@ -1443,7 +1482,7 @@ const ActivitiesSection = ({ navigate }) => {
         className="mb-6"
       >
         {/* Header */}
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Informasi Kegiatan</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">{t('home.activityInfoTitle')}</h2>
 
         {/* RT Filter Tabs */}
         <div
@@ -1567,8 +1606,8 @@ const ActivitiesSection = ({ navigate }) => {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Clock className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-500 font-medium">Belum ada kegiatan</p>
-              <p className="text-gray-400 text-sm mt-1">untuk {selectedRT || 'semua RT'}</p>
+              <p className="text-gray-500 font-medium">{t('home.noActivity')}</p>
+              <p className="text-gray-400 text-sm mt-1">{t('home.for')} {selectedRT || t('home.allRT')}</p>
             </div>
           )}
         </div>
@@ -1576,6 +1615,8 @@ const ActivitiesSection = ({ navigate }) => {
     </>
   );
 };
+
+
 
 const Home = () => {
   const navigate = useNavigate();
@@ -1744,6 +1785,9 @@ const Home = () => {
 
         {/* Activities Section (Kegiatan RW 01) */}
         <ActivitiesSection navigate={navigate} />
+
+        {/* Financial Reports Section */}
+        <FinancialReportsSection />
 
 
       </div>
