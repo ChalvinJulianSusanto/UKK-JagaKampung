@@ -15,12 +15,10 @@ erDiagram
     USER ||--o{ ATTENDANCE_RECAP : "creates (admin)"
     USER ||--o{ ATTENDANCE : "approves (admin)"
 
+    USER ||--o{ BUDGET : "creates (admin)"
+
     SCHEDULE ||--|{ SCHEDULE_ENTRY : "embeds entries"
     SCHEDULE ||--o{ ATTENDANCE : "linked to"
-
-    RT ||--o{ USER : "has residents"
-    RT ||--o{ SCHEDULE : "has roster"
-    RT ||--o{ ATTENDANCE : "has records"
 
     %% Entity Definitions
 
@@ -104,14 +102,28 @@ erDiagram
         Date updatedAt
     }
 
-    RT {
+    INCOME {
         ObjectId _id PK
-        String number "Unique: 01-06"
-        String name
-        String kepalaRT
-        Number totalWarga
-        String address
-        Boolean isActive
+        String category "Custom String"
+        Number amount
+        Date date
+        String description
+        String rt "Enum: 01-06, RW-01"
+        Number year
+        String month
+        Date createdAt
+        Date updatedAt
+    }
+
+    BUDGET {
+        ObjectId _id PK
+        Number year
+        String rt "Enum: 01-06, RW-01"
+        String category "Custom String"
+        Number allocatedAmount
+        Number spentAmount
+        String description
+        ObjectId createdBy FK "User"
         Date createdAt
         Date updatedAt
     }
@@ -148,6 +160,13 @@ A daily summary report usually created by a supervisor or admin.
 System-wide notifications for users.
 - **Features**: Supports read status tracking and deep linking (`link` field).
 
-### 6. RT (`RT.js`)
-Reference data for Rukun Tetangga units.
-- **Usage**: Provides metadata like `name`, `kepalaRT`, and `address`. The `number` field is used as a foreign key (string ref) in other collections.
+### 6. Income (`Income.js`)
+Records financial income for the RW.
+- **Category**: Flexible string field (no longer restricted to enum).
+- **Scope**: Can be specific to an RT or general (RW).
+
+### 7. Budget (`Budget.js`)
+Records budget allocations and usage.
+- **Category**: Flexible string field (no longer restricted to enum).
+- **Tracking**: Tracks `allocatedAmount` vs `spentAmount`.
+- **Virtuals**: Includes virtual fields for `remainingAmount` and `usagePercentage`.

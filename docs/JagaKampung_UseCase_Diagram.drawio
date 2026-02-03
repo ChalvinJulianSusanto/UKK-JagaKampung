@@ -1,11 +1,11 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.0 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.3.0">
   <diagram name="Use Case Diagram" id="Use_Case_JagaKampung">
-    <mxGraphModel dx="1950" dy="1918" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1856" dy="1848" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="sys_boundary" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;rounded=0;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;labelBackgroundColor=none;" value="Sistem Informasi JagaKampung" vertex="1">
-          <mxGeometry height="1280" width="560" x="222" y="-27" as="geometry" />
+          <mxGeometry height="1280" width="560" x="200" y="-20" as="geometry" />
         </mxCell>
         <mxCell id="rel_admin_5" edge="1" parent="sys_boundary" style="edgeStyle=none;html=1;endArrow=none;entryX=0.744;entryY=0.84;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;entryPerimeter=0;" target="uc_view_finance">
           <mxGeometry relative="1" as="geometry">
@@ -15,12 +15,6 @@
             </Array>
             <mxPoint x="720" y="490" as="sourcePoint" />
             <mxPoint x="310" y="750.92" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="iYsTzdB1oh0mVLwxfSjS-6" edge="1" parent="sys_boundary" source="actor_admin" style="edgeStyle=none;html=1;endArrow=none;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="729" y="519" as="sourcePoint" />
-            <mxPoint x="374" y="200" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="actor_warga" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;labelBackgroundColor=none;" value="Petugas Jaga / Warga" vertex="1">
@@ -122,7 +116,7 @@
         <mxCell id="rel_admin_1_out" edge="1" parent="1" source="actor_admin" style="edgeStyle=none;html=1;endArrow=none;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;" target="uc_logout">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel_admin_2" edge="1" parent="1" style="edgeStyle=none;html=1;endArrow=none;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;">
+        <mxCell id="rel_admin_2" edge="1" parent="1" style="edgeStyle=none;html=1;endArrow=none;entryX=1;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;" target="uc_manage_users">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="790" y="660" />
@@ -145,12 +139,14 @@
             <mxPoint x="910" y="560" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="rel_admin_6" edge="1" parent="1" style="edgeStyle=none;html=1;endArrow=none;entryX=1;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;" target="uc_view_activity">
+        <mxCell id="rel_admin_6" edge="1" parent="1" style="edgeStyle=none;html=1;endArrow=none;labelBackgroundColor=none;fontColor=default;entryX=0.687;entryY=0.071;entryDx=0;entryDy=0;entryPerimeter=0;" target="5sA5zHBxWVe6TdIBhWZn-3">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="670" y="510" />
+              <mxPoint x="650" y="530" />
             </Array>
             <mxPoint x="930" y="440" as="sourcePoint" />
+            <mxPoint x="670" y="510" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="rel_admin_7" edge="1" parent="1" source="actor_admin" style="edgeStyle=none;html=1;endArrow=none;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;" target="uc_validate_att">
@@ -173,7 +169,7 @@
             <mxPoint x="599.3875106720895" y="466.2702702702702" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ext_1" edge="1" parent="1" source="uc_upload_doc" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=orthogonalEdgeStyle;curved=1;labelBackgroundColor=none;fontColor=default;align=center;" target="uc_view_activity" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+        <mxCell id="ext_1" edge="1" parent="1" source="uc_upload_doc" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=orthogonalEdgeStyle;curved=1;labelBackgroundColor=none;fontColor=default;align=center;" target="uc_view_activity" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="uc_export_finance" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="Ekspor Laporan&#xa;(PDF/Excel)" vertex="1">
@@ -245,6 +241,15 @@
         </mxCell>
         <mxCell id="4AcuL1UbCRG_TdfdNoEp-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
           <mxGeometry height="30" width="90" x="477" y="443" as="geometry" />
+        </mxCell>
+        <mxCell id="iYsTzdB1oh0mVLwxfSjS-6" edge="1" parent="1" source="actor_admin" style="edgeStyle=none;html=1;endArrow=none;entryX=0.978;entryY=0.68;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;entryPerimeter=0;" target="uc_profile">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="951" y="492" as="sourcePoint" />
+            <mxPoint x="596" y="173" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5sA5zHBxWVe6TdIBhWZn-3" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Kelola Kegiatan" vertex="1">
+          <mxGeometry height="50" width="130" x="514" y="595" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

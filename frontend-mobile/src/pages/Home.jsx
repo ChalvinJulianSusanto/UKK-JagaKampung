@@ -1136,8 +1136,6 @@ const ActivityDocumentation = () => {
   // Gunakan ref untuk melacak state mounted agar aman saat async
   const isMounted = useRef(true);
   const containerRef = useRef(null);
-  const x = useMotionValue(0);
-  const isDragging = useRef(false);
 
   useEffect(() => {
     isMounted.current = true;
@@ -1204,111 +1202,39 @@ const ActivityDocumentation = () => {
     return `${apiBaseUrl}${normalizedPath}`;
   };
 
-  // Calculate indices without modulo wrap-around for rendering logic
-  const prevIndex = index - 1;
-  const nextIndex = index + 1;
-
-  // Logic to move slider programmatically
-  const slideTo = (direction) => {
-    if (!containerRef.current) return;
-    const width = containerRef.current.offsetWidth;
-    const newIndex = index + direction;
-
-    // Check bounds - disable loop
-    if (newIndex < 0 || newIndex >= docs.length) {
-      // Snap back if out of bounds
-      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
-      return;
-    }
-
-    // Animate x to -width (next) or width (prev)
-    animate(x, -direction * width, {
-      type: "spring", stiffness: 300, damping: 30
-    }).then(() => {
-      if (!isMounted.current) return;
-      x.set(0);
-      setIndex(newIndex);
-    });
-  };
-
-  // Auto slide - stop at end
+  // Auto slide
   useEffect(() => {
     if (docs.length <= 1) return;
 
     const interval = setInterval(() => {
-      // Only auto slide if not at the end
-      if (!isHovered && !isDragging.current && index < docs.length - 1) {
-        slideTo(1);
+      // Only auto slide if not hovering
+      if (!isHovered) {
+        setIndex((prev) => (prev + 1) % docs.length);
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length, index, isHovered]);
+  }, [docs.length, isHovered]);
 
-  // Drag End Handler
   const handleDragEnd = (e, { offset, velocity }) => {
-    isDragging.current = false;
-    if (!containerRef.current || docs.length <= 1) {
-      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
-      return;
-    }
-
-    const width = containerRef.current.offsetWidth;
     const swipe = offset.x;
-    const threshold = width * 0.25;
+    const threshold = 50; // Drag threshold
 
-    if (swipe < -threshold && index < docs.length - 1) {
-      // Swipe Left -> Next (only if not at end)
-      slideTo(1);
-    } else if (swipe > threshold && index > 0) {
-      // Swipe Right -> Prev (only if not at start)
-      slideTo(-1);
-    } else {
-      // Snap back
-      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+    if (swipe < -threshold) {
+      // Swipe Left -> Next
+      if (index < docs.length - 1) {
+        setIndex(index + 1);
+      }
+    } else if (swipe > threshold) {
+      // Swipe Right -> Prev
+      if (index > 0) {
+        setIndex(index - 1);
+      }
     }
   };
 
-  if (loading) return null;
+  if (loading) return null; // Or a skeleton
   if (docs.length === 0) return null;
-
-  const renderSlide = (docIndex, positionOffset) => {
-    // Boundary check for rendering
-    if (docIndex < 0 || docIndex >= docs.length) return null;
-
-    const doc = docs[docIndex];
-    if (!doc) return null;
-
-    const displayPhoto = getPhotoUrl(doc.displayPhotoPath);
-
-    return (
-      <div
-        className="absolute top-0 w-full h-full bg-gray-200"
-        style={{ left: `${positionOffset * 100}%` }}
-        key={`slide-${docIndex}`}
-      >
-        {displayPhoto ? (
-          <img
-            src={displayPhoto}
-            alt={doc.title || 'Dokumentasi'}
-            className="w-full h-full object-cover pointer-events-none select-none"
-            draggable="false"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-        ) : null}
-
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400"
-          style={{ display: displayPhoto ? 'none' : 'flex' }}
-        >
-          <MaskedIcon src={galleryIcon} size={32} color="#9CA3AF" alt="No Image" />
-        </div>
-      </div>
-    );
-  };
 
   const currentDoc = docs[index];
 
@@ -1319,59 +1245,80 @@ const ActivityDocumentation = () => {
       transition={{ duration: 0.5 }}
       className="mb-6 -mx-5"
     >
-      <h2 className="text-lg font-semibold text-gray-800 mb-3 px-5">{t('home.activityRecapTitle')}</h2>
+      <div className="flex items-center justify-between px-5 mb-3">
+        <h2 className="text-lg font-semibold text-gray-800">{t('home.activityRecapTitle')}</h2>
+      </div>
 
       <div
         ref={containerRef}
         className="relative w-full aspect-video overflow-hidden bg-gray-200 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setIsHovered(false)}
       >
         <motion.div
-          className="relative w-full h-full cursor-grab active:cursor-grabbing touch-pan-y"
-          style={{ x }}
+          className="flex w-full h-full cursor-grab active:cursor-grabbing"
+          animate={{ x: `-${index * 100}%` }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
           drag={docs.length > 1 ? "x" : false}
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
-          onDragStart={() => { isDragging.current = true; }}
+          dragElastic={0.1}
           onDragEnd={handleDragEnd}
         >
-          {docs.length > 1 ? (
-            <>
-              {renderSlide(prevIndex, -1)}
-              {renderSlide(index, 0)}
-              {renderSlide(nextIndex, 1)}
-            </>
-          ) : (
-            renderSlide(0, 0)
-          )}
+          {docs.map((doc, idx) => {
+            const displayPhoto = getPhotoUrl(doc.displayPhotoPath);
+            return (
+              <div
+                key={`${doc._id}-${idx}`}
+                className="relative min-w-full h-full"
+              >
+                {displayPhoto ? (
+                  <img
+                    src={displayPhoto}
+                    alt={doc.title || 'Dokumentasi'}
+                    className="w-full h-full object-cover pointer-events-none select-none"
+                    draggable="false"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+
+                <div
+                  className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400"
+                  style={{ display: displayPhoto ? 'none' : 'flex' }}
+                >
+                  <MaskedIcon src={galleryIcon} size={32} color="#9CA3AF" alt="No Image" />
+                </div>
+
+                {/* Overlay Info (Per Slide) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
+                  <h3 className="text-white font-bold text-lg leading-tight mb-1 line-clamp-2">
+                    {doc.title}
+                  </h3>
+                  <p className="text-blue-200 text-sm font-medium opacity-90">
+                    {doc.eventDate ? format(new Date(doc.eventDate), 'dd MMMM yyyy', { locale: id }) : '-'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </motion.div>
 
-        {/* Overlay Info */}
-        {currentDoc && (
-          <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-            <h3 className="text-white font-bold text-lg leading-tight mb-1 line-clamp-2">
-              {currentDoc.title}
-            </h3>
-            <p className="text-blue-200 text-sm font-medium">
-              {currentDoc.eventDate ? format(new Date(currentDoc.eventDate), 'dd MMMM yyyy', { locale: id }) : '-'}
-            </p>
-          </div>
-        )}
-
-        {/* Indicators */}
+        {/* Indicators - Kitabisa Style (Active: Blue Pill, Inactive: Gray/White Dot) */}
         {docs.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 pointer-events-auto">
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-auto">
             {docs.map((_, idx) => (
               <button
                 key={idx}
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent drag triggering
+                  e.stopPropagation();
                   setIndex(idx);
-                  x.set(0);
                 }}
                 className={`h-1.5 rounded-full transition-all duration-300 ${idx === index
-                  ? 'w-8 bg-white'
+                  ? 'w-6 bg-blue-500 shadow-md'
                   : 'w-1.5 bg-white/60 hover:bg-white/80'
                   }`}
                 aria-label={`Go to slide ${idx + 1}`}
