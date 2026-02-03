@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const incomeSchema = new mongoose.Schema({
     category: {
         type: String,
-        required: true,
-        enum: ['Iuran', 'Hibah Pemerintah', 'Donasi', 'Lainnya']
+        required: true
     },
     amount: {
         type: Number,

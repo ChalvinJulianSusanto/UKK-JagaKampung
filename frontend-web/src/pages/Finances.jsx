@@ -10,8 +10,10 @@ import toast from 'react-hot-toast';
 
 // Import icons
 import iconMoney from '../assets/money.png';
-import iconChart from '../assets/chart.png';
-
+import iconChart from '../assets/analisis.png';
+import iconIuran from '../assets/income.png';
+import iconProfit from '../assets/profits.png';
+import iconSaldo from '../assets/profit.png';
 // Helper component: render PNG icon as a mask
 const MaskedIcon = ({ src, color = '#1976D2', size = 24, alt = '' }) => {
     const style = {
@@ -139,7 +141,7 @@ const Finances = () => {
         {
             title: 'Total Iuran Terkumpul',
             value: formatCurrency(totalTerkumpul),
-            icon: iconMoney,
+            icon: iconIuran,
             isImage: true,
             gradient: 'from-emerald-500 to-emerald-600',
             lightBg: 'bg-emerald-50',
@@ -150,7 +152,7 @@ const Finances = () => {
         {
             title: 'Total Anggaran',
             value: formatCurrency(totalAlokasi),
-            icon: iconChart,
+            icon: iconProfit,
             isImage: true,
             gradient: 'from-blue-500 to-blue-600',
             lightBg: 'bg-blue-50',
@@ -190,9 +192,7 @@ const Finances = () => {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                                    <DollarSign className="w-6 h-6 text-white" />
-                                </div>
+                
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-900">Statistik Keuangan</h1>
                                     <p className="text-sm text-gray-500 mt-0.5">Informasi keuangan RW 01</p>
@@ -263,9 +263,7 @@ const Finances = () => {
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                <Wallet className="w-5 h-5 text-white" />
-                            </div>
+
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900">Iuran Bulanan per RT</h3>
                                 <p className="text-xs text-gray-500 mt-0.5">Status pengumpulan iuran</p>
@@ -361,9 +359,6 @@ const Finances = () => {
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                <PiggyBank className="w-5 h-5 text-white" />
-                            </div>
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900">Detail Anggaran per Kategori</h3>
                                 <p className="text-xs text-gray-500 mt-0.5">Alokasi dan penggunaan dana</p>

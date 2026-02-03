@@ -22,6 +22,7 @@ import Notifications from './pages/Notifications';
 import AttendanceCalendar from './pages/AttendanceCalendar';
 import CompleteProfile from './pages/CompleteProfile';
 import ActivityDetail from './pages/ActivityDetail';
+import PendingVerification from './pages/PendingVerification';
 
 // Public Route wrapper - redirect to home if already authenticated
 const PublicRoute = ({ children }) => {
@@ -84,6 +85,16 @@ function AppRoutes() {
           <PublicRoute>
             <Register />
           </PublicRoute>
+        }
+      />
+
+      {/* Pending Verification */}
+      <Route
+        path="/pending-verification"
+        element={
+          <ProtectedRoute>
+            <PendingVerification />
+          </ProtectedRoute>
         }
       />
 

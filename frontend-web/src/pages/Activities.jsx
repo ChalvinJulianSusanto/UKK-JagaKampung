@@ -566,41 +566,46 @@ const Activities = () => {
             </div>
 
             {/* Tabs - Professional Design */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div className="flex">
+            <div className="flex justify-start">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 inline-flex items-center gap-1">
                     <button
-                        onClick={() => setActiveTab('kegiatan')}
-                        className={`flex-1 px-6 py-4 font-semibold text-sm transition-all duration-200 relative border-b-2 ${activeTab === 'kegiatan'
-                            ? 'text-blue-600 border-blue-600 bg-blue-50/30'
-                            : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+                        onClick={() => {
+                            setActiveTab('kegiatan');
+                            setFilterRT('');
+                            setFilterStatus('');
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'kegiatan'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                             }`}
                     >
-                        <div className="flex items-center justify-center gap-2">
-                            <Calendar size={18} />
-                            <span>Kegiatan</span>
-                            {activeTab === 'kegiatan' && (
-                                <span className="ml-1.5 px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-md">
-                                    {activities.length}
-                                </span>
-                            )}
-                        </div>
+                        <Calendar size={16} />
+                        <span>Kegiatan</span>
+                        {activeTab === 'kegiatan' && (
+                            <span className="ml-1 px-1.5 py-0.5 bg-white/20 text-white text-[10px] font-bold rounded-md">
+                                {activities.length}
+                            </span>
+                        )}
                     </button>
+
                     <button
-                        onClick={() => setActiveTab('dokumentasi')}
-                        className={`flex-1 px-6 py-4 font-semibold text-sm transition-all duration-200 relative border-b-2 ${activeTab === 'dokumentasi'
-                            ? 'text-blue-600 border-blue-600 bg-blue-50/30'
-                            : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+                        onClick={() => {
+                            setActiveTab('dokumentasi');
+                            setFilterRT('');
+                            setFilterStatus('');
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'dokumentasi'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                             }`}
                     >
-                        <div className="flex items-center justify-center gap-2">
-                            <ImageIcon size={18} />
-                            <span>Dokumentasi</span>
-                            {activeTab === 'dokumentasi' && (
-                                <span className="ml-1.5 px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-md">
-                                    {activities.length}
-                                </span>
-                            )}
-                        </div>
+                        <ImageIcon size={16} />
+                        <span>Dokumentasi</span>
+                        {activeTab === 'dokumentasi' && (
+                            <span className="ml-1 px-1.5 py-0.5 bg-white/20 text-white text-[10px] font-bold rounded-md">
+                                {activities.length}
+                            </span>
+                        )}
                     </button>
                 </div>
             </div>
@@ -770,12 +775,12 @@ const Activities = () => {
                                         </div>
 
                                         {/* Title */}
-                                        <h3 className="font-semibold text-sm text-gray-800 mb-2 line-clamp-2">
+                                        <h3 className="font-semibold text-sm text-gray-800 mb-2 line-clamp-2 h-10 overflow-hidden">
                                             {activity.title}
                                         </h3>
 
                                         {/* Description */}
-                                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                                        <p className="text-xs text-gray-600 mb-2 line-clamp-2 h-8 overflow-hidden">
                                             {activity.description}
                                         </p>
 
@@ -1262,7 +1267,7 @@ const Activities = () => {
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     {/* Modal Header */}
-                                    <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex items-center justify-between">
+                                    <div className="sticky top-0 z-10 bg-white border-b border-gray-100 p-6 flex items-center justify-between">
                                         <h2 className="text-xl font-bold text-gray-800">
                                             {activeTab === 'dokumentasi'
                                                 ? (selectedActivity ? 'Edit Dokumentasi' : 'Tambah Dokumentasi Baru')
@@ -1536,7 +1541,7 @@ const Activities = () => {
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {/* Modal Header */}
-                                <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex items-center justify-between">
+                                <div className="sticky top-0 z-10 bg-white border-b border-gray-100 p-6 flex items-center justify-between">
                                     <h2 className="text-xl font-bold text-gray-800">Upload Dokumentasi</h2>
                                     <button
                                         onClick={handleCloseDocModal}

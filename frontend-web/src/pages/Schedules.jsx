@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { schedulesAPI } from '../api/schedules';
+import { usersAPI } from '../api/users';
 import Modal from '../components/common/Modal';
 import Loading from '../components/common/Loading';
 import toast from 'react-hot-toast';
@@ -61,6 +62,13 @@ const Schedules = () => {
     email: ''
   });
 
+  // User Selection Modal State
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+
+  // Data Warga untuk Dropdown
+  const [usersList, setUsersList] = useState([]);
+
   // Selection & Modal States
   const [selectedIds, setSelectedIds] = useState([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState({
@@ -89,6 +97,24 @@ const Schedules = () => {
     setIsAddingNew(false);
     setSelectedIds([]);
   }, [schedules, searchQuery]);
+
+  // Fetch Users when RT changes
+  useEffect(() => {
+    const fetchUsersByRT = async () => {
+      try {
+        const response = await usersAPI.getAll({ rt: selectedRT });
+        if (response.success) {
+          // Hanya ambil user yang aktif
+          setUsersList(response.data.filter(u => u.status === 'active' && u.role !== 'admin'));
+        }
+      } catch (error) {
+        console.error('Gagal memuat data warga:', error);
+      }
+    };
+    if (selectedRT) {
+      fetchUsersByRT();
+    }
+  }, [selectedRT]);
 
   // --- Logic Functions ---
   const fetchSchedules = async () => {
@@ -204,6 +230,20 @@ const Schedules = () => {
       return toast.error(`Tanggal harus bulan ${MONTHS[selectedMonth - 1]} ${selectedYear}`);
     }
 
+    // Validation: Max 3 people per day
+    const sameDayEntries = schedules.filter(s => s.date === dateInfo.date);
+    if (sameDayEntries.length >= 3) {
+      return toast.error('Gagal! Maksimal 3 orang petugas dalam satu hari.');
+    }
+
+    // Validation: Prevent duplicate user on same day
+    if (inlineForm.email) {
+      const isDuplicateUser = sameDayEntries.some(s => s.email === inlineForm.email);
+      if (isDuplicateUser) {
+        return toast.error('Gagal! Warga ini sudah ada dijadwal pada hari tersebut.');
+      }
+    }
+
     try {
       const response = await schedulesAPI.addEntry(currentSchedule._id, {
         guardName: inlineForm.guardName,
@@ -230,6 +270,20 @@ const Schedules = () => {
     const dateInfo = parseDateToEntry(inlineForm.fullDate);
     if (dateInfo.month !== selectedMonth || dateInfo.year !== selectedYear) {
       return toast.error(`Tanggal harus bulan ${MONTHS[selectedMonth - 1]} ${selectedYear}`);
+    }
+
+    // Validation: Max 3 people per day (excluding current entry)
+    const sameDayEntries = schedules.filter(s => s.date === dateInfo.date && s._id !== editingId);
+    if (sameDayEntries.length >= 3) {
+      return toast.error('Gagal! Maksimal 3 orang petugas dalam satu hari.');
+    }
+
+    // Validation: Prevent duplicate user on same day (excluding current entry)
+    if (inlineForm.email) {
+      const isDuplicateUser = sameDayEntries.some(s => s.email === inlineForm.email);
+      if (isDuplicateUser) {
+        return toast.error('Gagal! Warga ini sudah ada dijadwal pada hari tersebut.');
+      }
     }
 
     try {
@@ -321,8 +375,8 @@ const Schedules = () => {
             disabled={isAddingNew}
             className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white text-sm font-roboto sans-serif font-medium rounded-lg transition-all shadow-sm ${isAddingNew ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-95'}`}
           >
-            
-             +Tambah jadwal
+
+            +Tambah jadwal
           </button>
           {currentSchedule && schedules.length > 0 && (
             <button
@@ -473,16 +527,20 @@ const Schedules = () => {
                   <td className="px-6 py-4"></td>
                   <td className="px-4 py-4 text-sm text-blue-600 font-bold">Baru</td>
 
-                  {/* Nama Input */}
+                  {/* Nama Input (MODAL SELECTION) */}
                   <td className="px-4 py-2">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={inlineForm.guardName}
-                      onChange={(e) => setInlineForm({ ...inlineForm, guardName: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-blue-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Ketik nama..."
-                    />
+                    <button
+                      onClick={() => {
+                        setShowUserModal(true);
+                        setUserSearch('');
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-blue-300 rounded-md text-sm text-left text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none flex items-center justify-between"
+                    >
+                      <span className={inlineForm.guardName ? 'text-gray-900' : 'text-gray-400'}>
+                        {inlineForm.guardName || 'Pilih Warga...'}
+                      </span>
+                      <Search size={14} className="text-gray-400" />
+                    </button>
                   </td>
 
                   {/* Email Input */}
@@ -558,12 +616,18 @@ const Schedules = () => {
                         <td className="px-4 py-4 text-sm text-gray-500 font-medium">{index + 1}</td>
 
                         <td className="px-4 py-2">
-                          <input
-                            type="text"
-                            value={inlineForm.guardName}
-                            onChange={(e) => setInlineForm({ ...inlineForm, guardName: e.target.value })}
-                            className="w-full px-3 py-2 bg-white border border-yellow-400 rounded-md text-sm focus:ring-2 focus:ring-yellow-500 outline-none"
-                          />
+                          <button
+                            onClick={() => {
+                              setShowUserModal(true);
+                              setUserSearch('');
+                            }}
+                            className="w-full px-3 py-2 bg-white border border-yellow-400 rounded-md text-sm text-left text-gray-700 hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-500 outline-none flex items-center justify-between"
+                          >
+                            <span className="truncate">
+                              {inlineForm.guardName || 'Pilih Warga...'}
+                            </span>
+                            <Search size={14} className="text-gray-400" />
+                          </button>
                         </td>
 
                         {/* Email Input */}
@@ -705,6 +769,71 @@ const Schedules = () => {
               className="px-5 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 shadow-md transition-all"
             >
               Hapus
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* --- ADDED: USER SELECTION MODAL --- */}
+      <Modal
+        isOpen={showUserModal}
+        onClose={() => setShowUserModal(false)}
+        title="Pilih Petugas Ronda"
+      >
+        <div className="w-full max-w-md mx-auto">
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Cari nama warga..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+            />
+          </div>
+
+          {/* User List */}
+          <div className="max-h-[300px] overflow-y-auto border border-gray-100 rounded-lg divide-y divide-gray-100">
+            {usersList.length === 0 ? (
+              <div className="p-4 text-center text-gray-500 text-sm">
+                Tidak ada data warga di RT {selectedRT} (aktif).
+              </div>
+            ) : usersList.filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase())).length === 0 ? (
+              <div className="p-4 text-center text-gray-500 text-sm">
+                Nama tidak ditemukan.
+              </div>
+            ) : (
+              usersList
+                .filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase()))
+                .map(user => (
+                  <button
+                    key={user._id}
+                    onClick={() => {
+                      setInlineForm(prev => ({ ...prev, guardName: user.name, email: user.email }));
+                      setShowUserModal(false);
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
+                      {user.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-800 group-hover:text-blue-700">{user.name}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                    </div>
+                  </button>
+                ))
+            )}
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => setShowUserModal(false)}
+              className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              Batal
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@ const User = require('../models/User');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/uploadToCloudinary');
 const { createNotification, NotificationTemplates } = require('../utils/notificationHelper');
 
+// [CRUD - READ] Mengambil semua data pengguna
 // @desc    Get all users
 // @route   GET /api/users
 // @access  Private/Admin
@@ -36,6 +37,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// [CRUD - READ (DETAIL)] Mengambil data pengguna berdasarkan ID
 // @desc    Get single user
 // @route   GET /api/users/:id
 // @access  Private
@@ -62,6 +64,7 @@ exports.getUser = async (req, res) => {
   }
 };
 
+// [CRUD - UPDATE] Memperbarui data pengguna
 // @desc    Update user
 // @route   PUT /api/users/:id
 // @access  Private
@@ -98,6 +101,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+// [CRUD - DELETE] Menghapus data pengguna
 // @desc    Delete user
 // @route   DELETE /api/users/:id
 // @access  Private/Admin
@@ -126,6 +130,7 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+// [CRUD - UPDATE (STATUS)] Memblokir/Mengaktifkan pengguna
 // @desc    Ban/Unban user
 // @route   PUT /api/users/:id/ban
 // @access  Private/Admin
@@ -151,6 +156,7 @@ exports.toggleBanUser = async (req, res) => {
 
     await createNotification(
       user._id,
+      user._id,
       notifTemplate.type,
       notifTemplate.title,
       notifTemplate.message,
@@ -171,6 +177,7 @@ exports.toggleBanUser = async (req, res) => {
   }
 };
 
+// [CRUD - READ (SPECIFIC)] Mengambil pengguna berdasarkan RT
 // @desc    Get users by RT
 // @route   GET /api/users/rt/:rtNumber
 // @access  Private

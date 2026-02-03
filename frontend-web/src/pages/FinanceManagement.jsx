@@ -113,8 +113,13 @@ const FinanceManagement = () => {
     const [isIncomeYearOpen, setIsIncomeYearOpen] = useState(false);
     const [isMonthOpen, setIsMonthOpen] = useState(false);
     const [isRTOpen, setIsRTOpen] = useState(false);
-    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-    const [isIncomeCategoryOpen, setIsIncomeCategoryOpen] = useState(false);
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false); // Budget Category
+    const [isIncomeCategoryOpen, setIsIncomeCategoryOpen] = useState(false); // Income Category
+
+    // Custom Category States
+    const [isBudgetCustom, setIsBudgetCustom] = useState(false);
+    const [isIncomeCustom, setIsIncomeCustom] = useState(false);
+
     const [isIncomeRTOpen, setIsIncomeRTOpen] = useState(false);
     const [isIncomeMonthOpen, setIsIncomeMonthOpen] = useState(false);
 
@@ -305,6 +310,7 @@ const FinanceManagement = () => {
             description: '',
         });
         setEditingBudget(null);
+        setIsBudgetCustom(false);
     };
 
     const resetIncomeForm = () => {
@@ -318,6 +324,7 @@ const FinanceManagement = () => {
             month: ''
         });
         setEditingIncome(null);
+        setIsIncomeCustom(false);
     };
 
     // Open edit modal
@@ -346,6 +353,11 @@ const FinanceManagement = () => {
             spentAmount: budget.spentAmount,
             description: budget.description || '',
         });
+
+        // Check if category is custom
+        const isStandard = BUDGET_CATEGORIES.slice(0, -1).includes(budget.category);
+        setIsBudgetCustom(!isStandard);
+
         setBudgetModal(true);
     };
 
@@ -360,6 +372,12 @@ const FinanceManagement = () => {
             year: income.year,
             month: income.month
         });
+
+
+        // Check if category is custom
+        const isStandard = INCOME_CATEGORIES.slice(0, -1).includes(income.category);
+        setIsIncomeCustom(!isStandard);
+
         setIncomeModal(true);
     };
 
@@ -842,7 +860,7 @@ const FinanceManagement = () => {
                                                                 <Edit2 size={16} />
                                                             </button>
                                                             <button
-                                                                onClick={() => setDeleteConfirm({ show: true, type: 'budget', id: budget._id })}
+                                                                onClick={() => setDeleteConfirm({ show: true, type: 'anggaran', id: budget._id })}
                                                                 className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                                 title="Hapus"
                                                             >
@@ -888,9 +906,8 @@ const FinanceManagement = () => {
                                         <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">{category}</p>
                                         <h3 className="text-xl font-bold text-gray-900 mt-1">{formatCurrency(total)}</h3>
                                     </div>
-                                    <div className={`p-3 rounded-xl ${styles.bg} ${styles.text}`}>
-                                        <DollarSign size={24} />
-                                    </div>
+
+
                                 </div>
                             );
                         })}
@@ -1321,7 +1338,7 @@ const FinanceManagement = () => {
                                 onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                                 className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-gray-100 transition-colors"
                             >
-                                <span>{budgetForm.category || 'Pilih Kategori'}</span>
+                                <span>{isBudgetCustom ? 'Lainnya' : (budgetForm.category || 'Pilih Kategori')}</span>
                                 <ChevronDown size={14} className={`text-gray-400 transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
                             </button>
                             <AnimatePresence>
@@ -1337,7 +1354,13 @@ const FinanceManagement = () => {
                                                 <div
                                                     key={cat}
                                                     onClick={() => {
-                                                        setBudgetForm({ ...budgetForm, category: cat });
+                                                        if (cat === 'Lainnya') {
+                                                            setIsBudgetCustom(true);
+                                                            setBudgetForm({ ...budgetForm, category: '' });
+                                                        } else {
+                                                            setIsBudgetCustom(false);
+                                                            setBudgetForm({ ...budgetForm, category: cat });
+                                                        }
                                                         setIsCategoryOpen(false);
                                                     }}
                                                     className="px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 text-gray-600"
@@ -1350,6 +1373,18 @@ const FinanceManagement = () => {
                                 )}
                             </AnimatePresence>
                         </div>
+                        {isBudgetCustom && (
+                            <div className="mt-2">
+                                <Input
+                                    type="text"
+                                    value={budgetForm.category}
+                                    onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
+                                    placeholder="Masukkan kategori lainnya..."
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -1436,7 +1471,7 @@ const FinanceManagement = () => {
                                     onClick={() => setIsIncomeCategoryOpen(!isIncomeCategoryOpen)}
                                     className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-gray-100 transition-colors"
                                 >
-                                    <span>{incomeForm.category || 'Pilih Kategori'}</span>
+                                    <span>{isIncomeCustom ? 'Lainnya' : (incomeForm.category || 'Pilih Kategori')}</span>
                                     <ChevronDown size={14} className={`text-gray-400 transition-transform ${isIncomeCategoryOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 <AnimatePresence>
@@ -1452,7 +1487,13 @@ const FinanceManagement = () => {
                                                     <div
                                                         key={cat}
                                                         onClick={() => {
-                                                            setIncomeForm({ ...incomeForm, category: cat });
+                                                            if (cat === 'Lainnya') {
+                                                                setIsIncomeCustom(true);
+                                                                setIncomeForm({ ...incomeForm, category: '' });
+                                                            } else {
+                                                                setIsIncomeCustom(false);
+                                                                setIncomeForm({ ...incomeForm, category: cat });
+                                                            }
                                                             setIsIncomeCategoryOpen(false);
                                                         }}
                                                         className="px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 text-gray-600"
@@ -1465,6 +1506,18 @@ const FinanceManagement = () => {
                                     )}
                                 </AnimatePresence>
                             </div>
+                            {isIncomeCustom && (
+                                <div className="mt-2">
+                                    <Input
+                                        type="text"
+                                        value={incomeForm.category}
+                                        onChange={(e) => setIncomeForm({ ...incomeForm, category: e.target.value })}
+                                        placeholder="Masukkan kategori lainnya..."
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Amount */}

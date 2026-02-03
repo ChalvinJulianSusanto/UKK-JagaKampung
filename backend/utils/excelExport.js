@@ -15,9 +15,16 @@ const formatDateWithDay = (date) => {
 
 // Helper function to format timestamp with day name
 const formatTimestampWithDay = (date) => {
+  if (!date) return '-';
   const dayName = getDayName(date);
   const formattedDateTime = new Date(date).toLocaleString('id-ID');
   return `${dayName}, ${formattedDateTime}`;
+};
+
+// Helper function to format just the time
+const formatTime = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 };
 
 /**
@@ -33,13 +40,14 @@ const exportAttendanceToExcel = async (attendances, rt = null) => {
   // Set columns
   worksheet.columns = [
     { header: 'No', key: 'no', width: 5 },
-    { header: 'Tanggal', key: 'date', width: 15 },
+    { header: 'Tanggal', key: 'date', width: 22 },
     { header: 'Nama', key: 'name', width: 25 },
     { header: 'RT', key: 'rt', width: 8 },
+    { header: 'Jam Masuk', key: 'timeIn', width: 15 },
+    { header: 'Jam Pulang', key: 'timeOut', width: 15 },
     { header: 'Status', key: 'status', width: 15 },
     { header: 'Alasan', key: 'reason', width: 30 },
     { header: 'Approved', key: 'approved', width: 12 },
-    { header: 'Waktu Absen', key: 'timestamp', width: 20 },
   ];
 
   // Style header
@@ -58,10 +66,11 @@ const exportAttendanceToExcel = async (attendances, rt = null) => {
       date: formatDateWithDay(attendance.date),
       name: attendance.user?.name || 'N/A',
       rt: attendance.rt,
-      status: attendance.status === 'hadir' ? 'Hadir' : 'Tidak Hadir',
+      timeIn: formatTime(attendance.checkIn),
+      timeOut: formatTime(attendance.checkOut),
+      status: attendance.status,
       reason: attendance.reason || '-',
       approved: attendance.approved ? 'Disetujui' : 'Belum',
-      timestamp: formatTimestampWithDay(attendance.createdAt),
     });
   });
 

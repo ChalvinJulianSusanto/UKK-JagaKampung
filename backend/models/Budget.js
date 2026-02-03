@@ -13,7 +13,6 @@ const budgetSchema = new mongoose.Schema(
         },
         category: {
             type: String,
-            enum: ['Keamanan', 'Kebersihan', 'Infrastruktur', 'Sosial', 'Administrasi', 'Lainnya'],
             required: [true, 'Kategori harus dipilih'],
         },
         allocatedAmount: {

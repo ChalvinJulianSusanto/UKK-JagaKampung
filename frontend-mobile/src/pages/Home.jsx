@@ -1151,7 +1151,29 @@ const ActivityDocumentation = () => {
       const response = await activitiesAPI.getAll({ isDocumentationFeed: 'true', limit: 10 });
       if (isMounted.current) {
         if (response.data && response.data.data) {
-          setDocs(response.data.data);
+          // FLATTEN: Convert activities with multiple photos into multiple slide items
+          const rawDocs = response.data.data;
+          const slides = [];
+
+          rawDocs.forEach(doc => {
+            if (doc.documentation && doc.documentation.length > 0) {
+              // Activity has multiple photos in 'documentation' array
+              doc.documentation.forEach(photoPath => {
+                slides.push({
+                  ...doc,
+                  displayPhotoPath: photoPath // Specific photo for this slide
+                });
+              });
+            } else if (doc.photo) {
+              // Activity has single photo
+              slides.push({
+                ...doc,
+                displayPhotoPath: doc.photo
+              });
+            }
+          });
+
+          setDocs(slides);
         } else {
           setDocs([]);
         }
@@ -1182,41 +1204,69 @@ const ActivityDocumentation = () => {
     return `${apiBaseUrl}${normalizedPath}`;
   };
 
+  // Calculate indices without modulo wrap-around for rendering logic
+  const prevIndex = index - 1;
+  const nextIndex = index + 1;
+
   // Logic to move slider programmatically
   const slideTo = (direction) => {
     if (!containerRef.current) return;
     const width = containerRef.current.offsetWidth;
+    const newIndex = index + direction;
 
-    // Animate x to -width (next) or width (prev)
-    animate(x, -direction * width, {
+    // Check bounds - disable loop
+    if (newIndex < 0 || newIndex >= docs.length) {
+      // Snap back if out of bounds
+      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+      return;
+    }
+
+    // IMMEDIATE UPDATE: Update index first so pagination reflects change instantly
+    setIndex(newIndex);
+
+    // Then animate the x-offset to create the slide effect
+    // Note: Since we updated 'index' immediately, the 'current' slide in DOM becomes the NEW slide.
+    // So we need to animate FROM the offset (direction * width) TO 0.
+    // However, the Framer Motion "drag" + re-render logic can be tricky.
+    // A simpler approach for instant pagination with smooth sliding:
+    // 1. We are physically moving the 'div' with 'x'.
+    // 2. We want to slide to -width (if next) or width (if prev).
+    // 3. BUT we also want 'index' to update instantly.
+
+    // Alternative Strategy for "Instant Pagination, Smooth Slide":
+    // The previous logic waited for animation to finish BEFORE updating index.
+    // To make pagination instant, we update index NOW, but we must ensure the visual slide
+    // looks correct. If we update index NOW, the component re-renders with the NEW slides in position.
+    // So "renderSlide(index, 0)" will now be the NEW slide. The OLD slide is at -1 (if we went next).
+    // So visually, we just jumped. We need to counter-act this jump with 'x'.
+
+    // If we are moving NEXT (direction = 1):
+    // Old Index: i. Old View: [i-1, i, i+1] at x=0
+    // New Index: i+1. New View: [i, i+1, i+2] at x=0.
+    // Visually we want: New View to START at x = width (so 'i' is visible), then animate to 0.
+
+    const initialX = direction * width;
+    x.set(initialX);
+
+    // Now animate to 0
+    animate(x, 0, {
       type: "spring", stiffness: 300, damping: 30
-    }).then(() => {
-      // Handle Component Unmount safety
-      if (!isMounted.current) return;
-
-      // Reset x to 0 and update index instantly to create infinite loop illusion
-      x.set(0);
-      setIndex((prev) => {
-        const count = docs.length;
-        if (count === 0) return 0;
-        // Ensure accurate modulo for negative numbers
-        return (prev + direction + count) % count;
-      });
     });
   };
 
-  // Auto slide
+  // Auto slide - stop at end
   useEffect(() => {
     if (docs.length <= 1) return;
 
     const interval = setInterval(() => {
-      if (!isHovered && !isDragging.current) {
+      // Only auto slide if not at the end
+      if (!isHovered && !isDragging.current && index < docs.length - 1) {
         slideTo(1);
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length, isHovered]);
+  }, [docs.length, index, isHovered]);
 
   // Drag End Handler
   const handleDragEnd = (e, { offset, velocity }) => {
@@ -1228,16 +1278,43 @@ const ActivityDocumentation = () => {
 
     const width = containerRef.current.offsetWidth;
     const swipe = offset.x;
-    const threshold = width * 0.25; // Swipe at least 25% to change
+    const threshold = width * 0.25;
 
-    if (swipe < -threshold) {
-      // Swipe Left -> Next
-      slideTo(1);
-    } else if (swipe > threshold) {
-      // Swipe Right -> Prev
-      slideTo(-1);
+    // Determine direction
+    let direction = 0;
+    if (swipe < -threshold && index < docs.length - 1) {
+      direction = 1; // Next
+    } else if (swipe > threshold && index > 0) {
+      direction = -1; // Prev
+    }
+
+    if (direction !== 0) {
+      // For drag, the 'x' is already dragged to some negative/positive value.
+      // We want to update index immediately to show correct dot.
+      const newIndex = index + direction;
+
+      // Update index immediately
+      setIndex(newIndex);
+
+      // Adjust X to maintain visual continuity.
+      // Current X is 'swipe'. 
+      // We just changed index by 'direction'.
+      // This shifts the rendered slides by 1 unit (width).
+      // e.g. Going Next (dir=1): New center is old Next.
+      // So visual position of New Center relative to viewport needs to be same as old Next.
+      // Old Next was at x = width + swipe? No, slides are at -100%, 0, 100%.
+      // Container x was moved by 'swipe'.
+      // If we change index, the content shifts by -width.
+      // So we need to ADD width to x to keep it in same visual place.
+
+      const offsetAdjustment = direction * width;
+      x.set(swipe + offsetAdjustment);
+
+      // Now animate to 0 to finish the snap
+      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+
     } else {
-      // Snap back to 0
+      // Snap back if threshold not met
       animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
     }
   };
@@ -1245,26 +1322,20 @@ const ActivityDocumentation = () => {
   if (loading) return null;
   if (docs.length === 0) return null;
 
-  const count = docs.length;
-  // Calculate indices safely
-  const prevIndex = (index - 1 + count) % count;
-  const nextIndex = (index + 1) % count;
-
   const renderSlide = (docIndex, positionOffset) => {
-    const doc = docs[docIndex];
-    if (!doc) return null; // Safety check
+    // Boundary check for rendering
+    if (docIndex < 0 || docIndex >= docs.length) return null;
 
-    const displayPhoto = (doc.documentation && doc.documentation.length > 0)
-      ? getPhotoUrl(doc.documentation[0])
-      : getPhotoUrl(doc.photo);
+    const doc = docs[docIndex];
+    if (!doc) return null;
+
+    const displayPhoto = getPhotoUrl(doc.displayPhotoPath);
 
     return (
       <div
         className="absolute top-0 w-full h-full bg-gray-200"
         style={{ left: `${positionOffset * 100}%` }}
-        // Key logic: Using docIndex prevents component remounting if we just shift position.
-        // We use positionOffset in key to differentiate the 3 rendered slides in the DOM.
-        key={`slide-${docIndex}-${positionOffset}`}
+        key={`slide-${docIndex}`}
       >
         {displayPhoto ? (
           <img
@@ -1274,13 +1345,11 @@ const ActivityDocumentation = () => {
             draggable="false"
             onError={(e) => {
               e.target.style.display = 'none';
-              // Show fallback if text sibling exists or just hide
               if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
             }}
           />
         ) : null}
 
-        {/* Fallback Only if no photo or error */}
         <div
           className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400"
           style={{ display: displayPhoto ? 'none' : 'flex' }}
@@ -1308,12 +1377,11 @@ const ActivityDocumentation = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Draggable Track */}
         <motion.div
           className="relative w-full h-full cursor-grab active:cursor-grabbing touch-pan-y"
           style={{ x }}
-          drag={docs.length > 1 ? "x" : false} // Disable drag if only 1 item
-          dragConstraints={{ left: 0, right: 0 }} // Infinite slider doesn't need hard constraints, but this helps snap back logic
+          drag={docs.length > 1 ? "x" : false}
+          dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.2}
           onDragStart={() => { isDragging.current = true; }}
           onDragEnd={handleDragEnd}
@@ -1533,7 +1601,7 @@ const ActivitiesSection = ({ navigate }) => {
           ) : activities.length > 0 ? (
             activities.map((activity) => {
               const daysRemaining = getDaysRemaining(activity.eventDate);
-              const photoUrl = getPhotoUrl(activity.photo);
+              const photoUrl = getPhotoUrl(activity.photo || (activity.documentation && activity.documentation.length > 0 ? activity.documentation[0] : null));
 
               return (
                 <motion.div

@@ -228,8 +228,8 @@ const AttendanceRecapManager = () => {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                            <ImageIcon className="text-blue-600" size={20} />
-                            Manajemen Foto Rekap
+
+                            Rekap kehadiran Warga
                         </h2>
                         <p className="text-xs text-gray-500 mt-1">
                             Upload dan kelola bukti foto kegiatan ronda malam.

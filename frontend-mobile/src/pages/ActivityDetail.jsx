@@ -105,7 +105,8 @@ const ActivityDetail = () => {
         );
     }
 
-    const photoUrl = getPhotoUrl(activity.photo);
+    const displayPhoto = activity.photo || (activity.documentation && activity.documentation.length > 0 ? activity.documentation[0] : null);
+    const photoUrl = getPhotoUrl(displayPhoto);
     const daysInfo = getDaysRemaining(activity.eventDate);
     const computedStatus = getComputedStatus(activity);
     const statusInfo = getStatusInfo(computedStatus);
@@ -209,6 +210,37 @@ const ActivityDetail = () => {
                             </p>
                         </div>
                     </motion.div>
+
+                    {/* Documentation Gallery Section */}
+                    {activity.documentation && activity.documentation.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="py-6 border-t border-gray-200"
+                        >
+                            <h2 className="text-lg font-bold text-gray-900 mb-4">Galeri Dokumentasi</h2>
+                            <div className="grid grid-cols-2 gap-3">
+                                {activity.documentation.map((doc, index) => (
+                                    <div
+                                        key={index}
+                                        className="aspect-square bg-gray-100 rounded-xl overflow-hidden shadow-sm"
+                                    >
+                                        <img
+                                            src={getPhotoUrl(doc)}
+                                            alt={`Dokumentasi ${index + 1}`}
+                                            className="w-full h-full object-cover active:scale-95 transition-transform duration-200"
+                                            onClick={() => {
+                                                // Optional: Add logic to view full screen
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+
+
                 </div>
             </div>
         </div>

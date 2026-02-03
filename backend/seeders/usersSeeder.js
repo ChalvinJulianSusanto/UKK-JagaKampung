@@ -18,15 +18,8 @@ const connectDB = async () => {
 
 // Sample users data
 const users = [
-  {
-    name: 'Budi Santoso',
-    email: 'budi@test.com',
-    password: 'password123',
-    phone: '081234567891',
-    rt: '01',
-    role: 'user',
-    status: 'active',
-  },
+  
+
   {
     name: 'Siti Rahayu',
     email: 'siti@test.com',
@@ -63,15 +56,7 @@ const users = [
     role: 'user',
     status: 'active',
   },
-  {
-    name: 'Linda Wijaya',
-    email: 'linda@test.com',
-    password: 'password123',
-    phone: '081234567896',
-    rt: '03',
-    role: 'user',
-    status: 'active',
-  },
+
 ];
 
 // Seed users

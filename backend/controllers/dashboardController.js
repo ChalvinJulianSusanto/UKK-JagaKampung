@@ -293,9 +293,12 @@ exports.exportAttendance = async (req, res) => {
     if (rt) filter.rt = rt;
 
     if (startDate && endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
       filter.date = {
         $gte: new Date(startDate),
-        $lte: new Date(endDate),
+        $lte: end,
       };
     }
 
@@ -303,7 +306,46 @@ exports.exportAttendance = async (req, res) => {
       .populate('user', 'name email rt')
       .sort({ date: -1 });
 
-    const excelBuffer = await exportAttendanceToExcel(attendances, rt);
+    // Aggregation Logic: Group by User and Date
+    const processedData = {};
+
+    attendances.forEach((record) => {
+      if (!record.user) return; // Skip if user deleted
+
+      const dateStr = new Date(record.date).toISOString().split('T')[0];
+      const key = `${record.user._id}-${dateStr}`;
+
+      if (!processedData[key]) {
+        processedData[key] = {
+          date: record.date,
+          user: record.user,
+          rt: record.rt,
+          status: record.status === 'hadir' ? 'Hadir' : 'Izin',
+          checkIn: null,
+          checkOut: null,
+          reason: record.reason || '-',
+          approved: record.approved
+        };
+      }
+
+      const entry = processedData[key];
+
+      // Update times based on type
+      if (record.type === 'masuk') {
+        entry.checkIn = record.createdAt;
+        if (record.approved) entry.approved = true;
+      } else if (record.type === 'pulang') {
+        entry.checkOut = record.createdAt;
+        if (record.approved) entry.approved = true;
+      } else if (record.type === 'izin') {
+        entry.status = 'Izin';
+        entry.checkIn = record.createdAt; // Use as timestamp reference
+      }
+    });
+
+    const finalData = Object.values(processedData).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const excelBuffer = await exportAttendanceToExcel(finalData, rt);
 
     const filename = `Rekap_Absensi${rt ? `_RT${rt}` : ''}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
@@ -334,9 +376,12 @@ exports.exportAttendancePDF = async (req, res) => {
     if (rt) filter.rt = rt;
 
     if (startDate && endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
       filter.date = {
         $gte: new Date(startDate),
-        $lte: new Date(endDate),
+        $lte: end,
       };
     }
 
@@ -344,7 +389,46 @@ exports.exportAttendancePDF = async (req, res) => {
       .populate('user', 'name email rt')
       .sort({ date: -1 });
 
-    const pdfBuffer = await exportAttendanceToPDF(attendances, rt);
+    // Aggregation Logic: Group by User and Date
+    const processedData = {};
+
+    attendances.forEach((record) => {
+      if (!record.user) return; // Skip if user deleted
+
+      const dateStr = new Date(record.date).toISOString().split('T')[0];
+      const key = `${record.user._id}-${dateStr}`;
+
+      if (!processedData[key]) {
+        processedData[key] = {
+          date: record.date,
+          user: record.user,
+          rt: record.rt,
+          status: record.status === 'hadir' ? 'Hadir' : 'Izin',
+          checkIn: null,
+          checkOut: null,
+          reason: record.reason || '-',
+          approved: record.approved
+        };
+      }
+
+      const entry = processedData[key];
+
+      // Update times based on type
+      if (record.type === 'masuk') {
+        entry.checkIn = record.createdAt;
+        if (record.approved) entry.approved = true;
+      } else if (record.type === 'pulang') {
+        entry.checkOut = record.createdAt;
+        if (record.approved) entry.approved = true;
+      } else if (record.type === 'izin') {
+        entry.status = 'Izin';
+        entry.checkIn = record.createdAt;
+      }
+    });
+
+    const finalData = Object.values(processedData).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const pdfBuffer = await exportAttendanceToPDF(finalData, rt);
 
     const filename = `Rekap_Absensi${rt ? `_RT${rt}` : ''}_${new Date().toISOString().split('T')[0]}.pdf`;
 

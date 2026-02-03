@@ -15,9 +15,16 @@ const formatDateWithDay = (date) => {
 
 // Helper function to format timestamp with day name
 const formatTimestampWithDay = (date) => {
+  if (!date) return '-';
   const dayName = getDayName(date);
   const formattedDateTime = new Date(date).toLocaleString('id-ID');
   return `${dayName}, ${formattedDateTime}`;
+};
+
+// Helper function to format just the time
+const formatTime = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 };
 
 /**
@@ -73,14 +80,15 @@ const exportAttendanceToPDF = (attendances, rt = null) => {
 
       // Column widths - Optimized untuk timestamp lebih panjang
       const colWidths = {
-        no: 25,
-        date: 75,
-        name: 110,
+        no: 30,
+        date: 85,
+        name: 120,
         rt: 35,
-        status: 70,
-        reason: 130,
-        approved: 55,
-        timestamp: 140, // Increased untuk accommodate "Senin, 13/1/2026, 14.30.47"
+        timeIn: 70, // Increased width
+        timeOut: 70, // Increased width to prevent wrapping
+        status: 60,
+        reason: 120,
+        approved: 60,
       };
 
       // Draw header background
@@ -104,10 +112,11 @@ const exportAttendanceToPDF = (attendances, rt = null) => {
         { text: 'Tanggal', width: colWidths.date },
         { text: 'Nama', width: colWidths.name },
         { text: 'RT', width: colWidths.rt },
+        { text: 'Jam Masuk', width: colWidths.timeIn },
+        { text: 'Jam Pulang', width: colWidths.timeOut },
         { text: 'Status', width: colWidths.status },
         { text: 'Alasan', width: colWidths.reason },
         { text: 'Approved', width: colWidths.approved },
-        { text: 'Waktu Absen', width: colWidths.timestamp },
       ];
 
       headers.forEach((header) => {
@@ -172,8 +181,10 @@ const exportAttendanceToPDF = (attendances, rt = null) => {
           },
           { text: attendance.user?.name || 'N/A', width: colWidths.name },
           { text: attendance.rt || '-', width: colWidths.rt },
+          { text: formatTime(attendance.checkIn), width: colWidths.timeIn },
+          { text: formatTime(attendance.checkOut), width: colWidths.timeOut },
           {
-            text: attendance.status === 'hadir' ? 'Hadir' : 'Tidak Hadir',
+            text: attendance.status,
             width: colWidths.status,
           },
           {
@@ -183,10 +194,6 @@ const exportAttendanceToPDF = (attendances, rt = null) => {
           {
             text: attendance.approved ? 'Disetujui' : 'Belum',
             width: colWidths.approved,
-          },
-          {
-            text: formatTimestampWithDay(attendance.createdAt),
-            width: colWidths.timestamp,
           },
         ];
 

@@ -432,9 +432,7 @@ const Dashboard = () => {
                       <stat.icon className="w-6 h-6 text-white" />
                     )}
                   </div>
-                  <div className={`${stat.lightBg} ${stat.textColor} px-2 py-1 rounded-lg text-xs font-medium`}>
-                    Aktif
-                  </div>
+
                 </div>
 
                 <div>

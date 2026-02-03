@@ -176,7 +176,13 @@ const Login = () => {
         const result = await loginWithGoogle(credential);
         if (result.success) {
           const userData = result.user;
-          (!userData.rt || !userData.phone) ? navigate('/complete-profile', { replace: true }) : navigate('/', { replace: true });
+          if (!userData.rt || !userData.phone) {
+            navigate('/complete-profile', { replace: true });
+          } else if (userData.status === 'pending') {
+            navigate('/pending-verification', { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
         }
       } catch (error) {
         console.error('Google login error:', error);
@@ -344,7 +350,7 @@ const Login = () => {
           // --- PERBAIKAN DI SINI ---
           // Kita tambahkan + 50vh (setengah tinggi layar) sebagai buffer tambahan
           // agar saat ditarik ke atas, card tidak habis (tidak kepotong).
-          minHeight: `calc(100vh - ${cardTopPosition} + 50vh)`, 
+          minHeight: `calc(100vh - ${cardTopPosition} + 50vh)`,
           paddingBottom: '50px', // Opsional: tambah padding bawah
           // ------------------------
           willChange: 'transform',

@@ -66,7 +66,7 @@ const CompleteProfile = () => {
             if (response.success && response.data) {
                 updateUser(response.data);
                 toast.success('Profil berhasil dilengkapi!');
-                navigate('/', { replace: true });
+                navigate('/pending-verification', { replace: true });
             }
         } catch (error) {
             console.error('Update profile error:', error);

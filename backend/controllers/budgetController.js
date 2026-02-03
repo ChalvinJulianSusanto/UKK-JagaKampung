@@ -1,5 +1,6 @@
 const Budget = require('../models/Budget');
 
+// [CRUD - READ] Mengambil semua data anggaran
 // @desc    Get all budget records
 // @route   GET /api/budgets
 // @access  Private
@@ -38,6 +39,7 @@ exports.getAllBudgets = async (req, res) => {
     }
 };
 
+// [CRUD - READ (SUMMARY)] Mengambil ringkasan anggaran
 // @desc    Get budget summary for dashboard
 // @route   GET /api/budgets/summary
 // @access  Private
@@ -88,6 +90,7 @@ exports.getBudgetSummary = async (req, res) => {
     }
 };
 
+// [CRUD - READ (DETAIL)] Mengambil satu data anggaran berdasarkan ID
 // @desc    Get single budget record by ID
 // @route   GET /api/budgets/:id
 // @access  Private
@@ -116,6 +119,7 @@ exports.getBudgetById = async (req, res) => {
     }
 };
 
+// [CRUD - CREATE] Menambahkan data anggaran baru
 // @desc    Create new budget record
 // @route   POST /api/budgets
 // @access  Private/Admin
@@ -154,6 +158,7 @@ exports.createBudget = async (req, res) => {
             success: true,
             data: populatedBudget,
             message: 'Data anggaran berhasil dibuat',
+            // [NOTE] Ini adalah respon sukses setelah CREATE
         });
     } catch (error) {
         console.error('Error in createBudget:', error);
@@ -164,6 +169,7 @@ exports.createBudget = async (req, res) => {
     }
 };
 
+// [CRUD - UPDATE] Mengubah data anggaran
 // @desc    Update budget record
 // @route   PUT /api/budgets/:id
 // @access  Private/Admin
@@ -214,6 +220,7 @@ exports.updateBudget = async (req, res) => {
     }
 };
 
+// [CRUD - DELETE] Menghapus data anggaran
 // @desc    Delete budget record
 // @route   DELETE /api/budgets/:id
 // @access  Private/Admin

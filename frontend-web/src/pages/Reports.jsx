@@ -319,7 +319,6 @@ const Reports = () => {
         ) : (
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-4">
-              <img src={profitIcon} alt="Pratinjau" className="w-5 h-5" style={{ filter: 'invert(64%) sepia(67%) saturate(381%) hue-rotate(359deg) brightness(99%) contrast(92%)' }} />
               <h2 className="text-lg font-bold text-gray-800">Pratinjau Statistik</h2>
             </div>
 

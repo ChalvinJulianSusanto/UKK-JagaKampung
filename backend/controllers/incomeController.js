@@ -1,5 +1,6 @@
 const Income = require('../models/Income');
 
+// [CRUD - READ] Mengambil semua data pemasukan
 // Get all income records with filters
 exports.getAllIncome = async (req, res) => {
     try {
@@ -28,6 +29,7 @@ exports.getAllIncome = async (req, res) => {
     }
 };
 
+// [CRUD - READ (SUMMARY)] Ringkasan data pemasukan
 // Get income summary
 exports.getIncomeSummary = async (req, res) => {
     try {
@@ -91,6 +93,7 @@ exports.getIncomeSummary = async (req, res) => {
     }
 };
 
+// [CRUD - CREATE] Menambahkan data pemasukan baru
 // Create new income record
 exports.createIncome = async (req, res) => {
     try {
@@ -130,6 +133,7 @@ exports.createIncome = async (req, res) => {
     }
 };
 
+// [CRUD - UPDATE] Mengubah data pemasukan
 // Update income record
 exports.updateIncome = async (req, res) => {
     try {
@@ -171,6 +175,7 @@ exports.updateIncome = async (req, res) => {
     }
 };
 
+// [CRUD - DELETE] Menghapus data pemasukan
 // Delete income record
 exports.deleteIncome = async (req, res) => {
     try {

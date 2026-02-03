@@ -58,17 +58,10 @@ const deleteActivityPhoto = async (photoPath) => {
         if (isCloudinaryConfigured) {
             try {
                 // Extract public_id from URL
-                // Example: https://res.cloudinary.com/demo/image/upload/v123456789/folder/my_image.jpg
                 const parts = photoPath.split('/');
                 const filename = parts[parts.length - 1];
                 const publicIdWithExt = `JagaKampung/activities/${filename}`;
                 const publicId = publicIdWithExt.split('.')[0];
-
-                // Note: This extraction is naive. For robust deletion, we should store public_id. 
-                // But for now, let's try this or just log a warning if we can't delete.
-                // Or better: extract everything after 'upload/v[version]/' until extension
-
-                // Simplest extraction strategy for our folder structure:
                 const folderIndex = parts.indexOf('JagaKampung');
                 if (folderIndex !== -1) {
                     const publicId = parts.slice(folderIndex).join('/').replace(/\.[^/.]+$/, "");
@@ -90,7 +83,7 @@ const deleteActivityPhoto = async (photoPath) => {
 };
 
 
-
+// [CRUD - READ] Mengambil semua data kegiatan
 // @desc    Get all activities
 // @route   GET /api/activities
 // @access  Private
@@ -123,10 +116,6 @@ exports.getAllActivities = async (req, res) => {
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
             filter.documentation = { $exists: true, $not: { $size: 0 } }; // Must have documentation
-            // filter.createdAt = { $gte: sevenDaysAgo }; // Only last 7 days (optional, based on requirement)
-            // User requested: "sudah lebih dari 1 pekan/minggu isi kontenya itu otomatis hilang dari halaman mobile"
-            // Assuming this means created date or event date. Let's use eventDate or createdAt. CreatedAt is safer for "upload time".
-            // Actually user said "hilang dari halaman mobile".
             filter.createdAt = { $gte: sevenDaysAgo };
         }
 
@@ -156,6 +145,7 @@ exports.getAllActivities = async (req, res) => {
     }
 };
 
+// [CRUD - READ (DETAIL)] Mengambil satu kegiatan berdasarkan ID
 // @desc    Get single activity by ID
 // @route   GET /api/activities/:id
 // @access  Private
@@ -184,6 +174,7 @@ exports.getActivityById = async (req, res) => {
     }
 };
 
+// [CRUD - CREATE] Membuat kegiatan baru
 // @desc    Create new activity
 // @route   POST /api/activities
 // @access  Private/Admin
@@ -256,6 +247,7 @@ exports.createActivity = async (req, res) => {
     }
 };
 
+// [CRUD - UPDATE] Mengubah data kegiatan
 // @desc    Update activity
 // @route   PUT /api/activities/:id
 // @access  Private/Admin
@@ -306,22 +298,7 @@ exports.updateActivity = async (req, res) => {
             activity.photo = await saveActivityPhoto(req.files.photo[0]);
         }
 
-        // Handle documentation update
-        // Note: Currently purely argumentative / appending. 
-        // Realistically usually you'd want to replace or add.
-        // For simplicity, let's append if new ones are uploaded.
-        // Or if user wants to "reset", they might need a separate delete endpoint/logic.
-        // Given the requirement "hanya tambahkan fungsi upload", replacing/adding is fine.
-        // Let's assume uploading documentation ADDS to existing.
         if (req.files && req.files.documentation) {
-            // If user uploads documentation, do we replace or append?
-            // Usually replace is safer for simple CRUD unless "add more" button exists.
-            // But let's append for now as it's safer than deleting history unintendedly.
-            // WAIT, if max is 10, maybe we should just replace?
-            // "Maximum content is 10". Is that 10 activities or 10 photos per activity?
-            // "maksimal contentnya itu sepuluh" likely refers to the FEED (10 items).
-            // But for photos? "upload dokumentasi kegiatan" suggests a batch.
-            // Let's just append for now.
             for (const file of req.files.documentation) {
                 const docPath = await saveActivityPhoto(file);
                 activity.documentation.push(docPath);
@@ -340,13 +317,14 @@ exports.updateActivity = async (req, res) => {
         });
     } catch (error) {
         console.error('Error in updateActivity:', error);
-        res.status(500).json({ // Fixed syntax error here
+        res.status(500).json({
             success: false,
             message: error.message,
         });
     }
 };
 
+// [CRUD - DELETE] Menghapus kegiatan
 // @desc    Delete activity
 // @route   DELETE /api/activities/:id
 // @access  Private/Admin
@@ -381,6 +359,7 @@ exports.deleteActivity = async (req, res) => {
     }
 };
 
+// [CRUD - UPDATE (UPLOAD)] Menambahkan dokumentasi pada kegiatan
 // @desc    Upload documentation to existing activity
 // @route   POST /api/activities/:id/documentation
 // @access  Private/Admin

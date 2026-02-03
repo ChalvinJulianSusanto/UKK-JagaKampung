@@ -348,11 +348,15 @@ const Users = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${user.status === 'active'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-red-50 text-red-700 border-red-200'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : user.status === 'pending'
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                              : 'bg-red-50 text-red-700 border-red-200'
                           }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                          {user.status === 'active' ? 'Aktif' : 'Banned'}
+                          <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'active' ? 'bg-green-500' :
+                              user.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}></span>
+                          {user.status === 'active' ? 'Aktif' : user.status === 'pending' ? 'Menunggu' : 'Diblokir'}
                         </span>
                       </td>
 
@@ -362,10 +366,15 @@ const Users = () => {
                           <button
                             onClick={() => handleBanUser(user._id, user.status)}
                             className={`p-2 rounded-lg transition-colors ${user.status === 'active'
-                              ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' // Active: Hover Merah (Ban)
-                              : 'text-red-500 bg-red-50 hover:bg-green-50 hover:text-green-600' // Banned: Hover Hijau (Unban)
+                                ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' // Active: Hover Merah (Ban)
+                                : user.status === 'pending'
+                                  ? 'text-yellow-600 bg-yellow-50 hover:bg-green-50 hover:text-green-600' // Pending: Yellow -> Green (Verify)
+                                  : 'text-red-500 bg-red-50 hover:bg-green-50 hover:text-green-600' // Banned: Hover Hijau (Unban)
                               }`}
-                            title={user.status === 'active' ? 'Ban User' : 'Unban User'}
+                            title={
+                              user.status === 'active' ? 'Nonaktifkan User' :
+                                user.status === 'pending' ? 'Verifikasi User' : 'Aktifkan User'
+                            }
                           >
                             {user.status === 'active' ? <Ban size={16} /> : <CheckCircle size={16} />}
                           </button>
