@@ -1221,36 +1221,13 @@ const ActivityDocumentation = () => {
       return;
     }
 
-    // IMMEDIATE UPDATE: Update index first so pagination reflects change instantly
-    setIndex(newIndex);
-
-    // Then animate the x-offset to create the slide effect
-    // Note: Since we updated 'index' immediately, the 'current' slide in DOM becomes the NEW slide.
-    // So we need to animate FROM the offset (direction * width) TO 0.
-    // However, the Framer Motion "drag" + re-render logic can be tricky.
-    // A simpler approach for instant pagination with smooth sliding:
-    // 1. We are physically moving the 'div' with 'x'.
-    // 2. We want to slide to -width (if next) or width (if prev).
-    // 3. BUT we also want 'index' to update instantly.
-
-    // Alternative Strategy for "Instant Pagination, Smooth Slide":
-    // The previous logic waited for animation to finish BEFORE updating index.
-    // To make pagination instant, we update index NOW, but we must ensure the visual slide
-    // looks correct. If we update index NOW, the component re-renders with the NEW slides in position.
-    // So "renderSlide(index, 0)" will now be the NEW slide. The OLD slide is at -1 (if we went next).
-    // So visually, we just jumped. We need to counter-act this jump with 'x'.
-
-    // If we are moving NEXT (direction = 1):
-    // Old Index: i. Old View: [i-1, i, i+1] at x=0
-    // New Index: i+1. New View: [i, i+1, i+2] at x=0.
-    // Visually we want: New View to START at x = width (so 'i' is visible), then animate to 0.
-
-    const initialX = direction * width;
-    x.set(initialX);
-
-    // Now animate to 0
-    animate(x, 0, {
+    // Animate x to -width (next) or width (prev)
+    animate(x, -direction * width, {
       type: "spring", stiffness: 300, damping: 30
+    }).then(() => {
+      if (!isMounted.current) return;
+      x.set(0);
+      setIndex(newIndex);
     });
   };
 
@@ -1280,41 +1257,14 @@ const ActivityDocumentation = () => {
     const swipe = offset.x;
     const threshold = width * 0.25;
 
-    // Determine direction
-    let direction = 0;
     if (swipe < -threshold && index < docs.length - 1) {
-      direction = 1; // Next
+      // Swipe Left -> Next (only if not at end)
+      slideTo(1);
     } else if (swipe > threshold && index > 0) {
-      direction = -1; // Prev
-    }
-
-    if (direction !== 0) {
-      // For drag, the 'x' is already dragged to some negative/positive value.
-      // We want to update index immediately to show correct dot.
-      const newIndex = index + direction;
-
-      // Update index immediately
-      setIndex(newIndex);
-
-      // Adjust X to maintain visual continuity.
-      // Current X is 'swipe'. 
-      // We just changed index by 'direction'.
-      // This shifts the rendered slides by 1 unit (width).
-      // e.g. Going Next (dir=1): New center is old Next.
-      // So visual position of New Center relative to viewport needs to be same as old Next.
-      // Old Next was at x = width + swipe? No, slides are at -100%, 0, 100%.
-      // Container x was moved by 'swipe'.
-      // If we change index, the content shifts by -width.
-      // So we need to ADD width to x to keep it in same visual place.
-
-      const offsetAdjustment = direction * width;
-      x.set(swipe + offsetAdjustment);
-
-      // Now animate to 0 to finish the snap
-      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
-
+      // Swipe Right -> Prev (only if not at start)
+      slideTo(-1);
     } else {
-      // Snap back if threshold not met
+      // Snap back
       animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
     }
   };
