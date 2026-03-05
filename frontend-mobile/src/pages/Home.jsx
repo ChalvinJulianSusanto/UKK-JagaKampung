@@ -1132,8 +1132,8 @@ const ActivityDocumentation = () => {
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Gunakan ref untuk melacak state mounted agar aman saat async
   const isMounted = useRef(true);
   const containerRef = useRef(null);
 
@@ -1149,23 +1149,22 @@ const ActivityDocumentation = () => {
       const response = await activitiesAPI.getAll({ isDocumentationFeed: 'true', limit: 10 });
       if (isMounted.current) {
         if (response.data && response.data.data) {
-          // FLATTEN: Convert activities with multiple photos into multiple slide items
           const rawDocs = response.data.data;
           const slides = [];
 
           rawDocs.forEach(doc => {
             if (doc.documentation && doc.documentation.length > 0) {
-              // Activity has multiple photos in 'documentation' array
-              doc.documentation.forEach(photoPath => {
+              doc.documentation.forEach((photoPath, i) => {
                 slides.push({
                   ...doc,
-                  displayPhotoPath: photoPath // Specific photo for this slide
+                  _uniqueId: `${doc._id}-doc-${i}`,
+                  displayPhotoPath: photoPath
                 });
               });
             } else if (doc.photo) {
-              // Activity has single photo
               slides.push({
                 ...doc,
+                _uniqueId: `${doc._id}-main`,
                 displayPhotoPath: doc.photo
               });
             }
@@ -1189,7 +1188,6 @@ const ActivityDocumentation = () => {
     if (photoPath.startsWith('http') || photoPath.startsWith('https')) return photoPath;
     if (photoPath.startsWith('data:')) return photoPath;
 
-    // Pastikan environment variables terbaca dengan benar
     const apiBaseUrl = (import.meta.env.VITE_API_URL ||
       (window.location.hostname.includes('vercel.app')
         ? 'https://ukk-jagakampung.onrender.com/api'
@@ -1202,41 +1200,43 @@ const ActivityDocumentation = () => {
     return `${apiBaseUrl}${normalizedPath}`;
   };
 
-  // Auto slide
+  // Auto slide - Stops at the last slide
   useEffect(() => {
     if (docs.length <= 1) return;
 
     const interval = setInterval(() => {
-      // Only auto slide if not hovering
-      if (!isHovered) {
-        setIndex((prev) => (prev + 1) % docs.length);
+      if (!isHovered && !isDragging) {
+        setIndex((prev) => {
+          // If at the end, stay there (standard carousel behavior)
+          // User requested "no bug", circular loop often causes bugs, specific finite behavior is safest
+          if (prev >= docs.length - 1) return prev;
+          return prev + 1;
+        });
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [docs.length, isHovered]);
+  }, [docs.length, isHovered, isDragging]);
 
   const handleDragEnd = (e, { offset, velocity }) => {
-    const swipe = offset.x;
-    const threshold = 50; // Drag threshold
+    setIsDragging(false);
 
-    if (swipe < -threshold) {
-      // Swipe Left -> Next
-      if (index < docs.length - 1) {
-        setIndex(index + 1);
-      }
-    } else if (swipe > threshold) {
-      // Swipe Right -> Prev
-      if (index > 0) {
-        setIndex(index - 1);
-      }
+    const swipe = offset.x;
+    const threshold = 60; // Clear threshold for deliberate swipes
+
+    // Simple logic: check direction and boundaries
+    if (swipe < -threshold && index < docs.length - 1) {
+      // Swipe left, go to next slide
+      setIndex(index + 1);
+    } else if (swipe > threshold && index > 0) {
+      // Swipe right, go to previous slide
+      setIndex(index - 1);
     }
+    // If conditions not met, framer motion will snap back to current position
   };
 
-  if (loading) return null; // Or a skeleton
+  if (loading) return null;
   if (docs.length === 0) return null;
-
-  const currentDoc = docs[index];
 
   return (
     <motion.div
@@ -1260,17 +1260,23 @@ const ActivityDocumentation = () => {
         <motion.div
           className="flex w-full h-full cursor-grab active:cursor-grabbing"
           animate={{ x: `-${index * 100}%` }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 30
+          }}
           drag={docs.length > 1 ? "x" : false}
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.1}
+          dragElastic={0.15} // Very low elasticity = resistance at edges without bounce
+          dragMomentum={false}
+          onDragStart={() => setIsDragging(true)}
           onDragEnd={handleDragEnd}
         >
           {docs.map((doc, idx) => {
             const displayPhoto = getPhotoUrl(doc.displayPhotoPath);
             return (
               <div
-                key={`${doc._id}-${idx}`}
+                key={doc._uniqueId || `${doc._id}-${idx}`}
                 className="relative min-w-full h-full"
               >
                 {displayPhoto ? (
@@ -1279,10 +1285,6 @@ const ActivityDocumentation = () => {
                     alt={doc.title || 'Dokumentasi'}
                     className="w-full h-full object-cover pointer-events-none select-none"
                     draggable="false"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
-                    }}
                   />
                 ) : null}
 
@@ -1293,7 +1295,6 @@ const ActivityDocumentation = () => {
                   <MaskedIcon src={galleryIcon} size={32} color="#9CA3AF" alt="No Image" />
                 </div>
 
-                {/* Overlay Info (Per Slide) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
                   <h3 className="text-white font-bold text-lg leading-tight mb-1 line-clamp-2">
                     {doc.title}
@@ -1307,7 +1308,7 @@ const ActivityDocumentation = () => {
           })}
         </motion.div>
 
-        {/* Indicators - Kitabisa Style (Active: Blue Pill, Inactive: Gray/White Dot) */}
+        {/* Indicators */}
         {docs.length > 1 && (
           <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-auto">
             {docs.map((_, idx) => (
